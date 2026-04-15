@@ -1,5 +1,6 @@
 package com.gitaapp.core.database.dao
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -76,11 +77,16 @@ interface VerseDao {
  * POJO for verse joined with bookmark status.
  */
 data class VerseWithBookmark(
+    @ColumnInfo(name = "verse_id")
     val verseId: String,
+    @ColumnInfo(name = "chapter_number")
     val chapterNumber: Int,
+    @ColumnInfo(name = "verse_number")
     val verseNumber: Int,
+    @ColumnInfo(name = "sanskrit_text")
     val sanskritText: String,
     val transliteration: String,
+    @ColumnInfo(name = "word_meanings")
     val wordMeanings: String,
     val translation: String,
     val commentary: String,

@@ -1,5 +1,6 @@
 package com.gitaapp.core.database.dao
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -55,8 +56,11 @@ interface ReadingProgressDao {
  * Progress joined with total verse count.
  */
 data class ProgressWithTotal(
+    @ColumnInfo(name = "chapter_number")
     val chapterNumber: Int,
+    @ColumnInfo(name = "last_read_verse_number")
     val lastReadVerseNumber: Int,
+    @ColumnInfo(name = "last_read_at")
     val lastReadAt: Long,
     val totalVerses: Int
 )

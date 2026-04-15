@@ -1,5 +1,6 @@
 package com.gitaapp.core.database.dao
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -53,11 +54,16 @@ interface ChapterDao {
  * POJO for the JOIN result — not an Entity itself.
  */
 data class ChapterWithProgress(
+    @ColumnInfo(name = "chapter_number")
     val chapterNumber: Int,
+    @ColumnInfo(name = "name_transliterated")
     val nameTransliterated: String,
+    @ColumnInfo(name = "name_sanskrit")
     val nameSanskrit: String,
+    @ColumnInfo(name = "name_meaning")
     val nameMeaning: String,
     val summary: String,
+    @ColumnInfo(name = "verse_count")
     val verseCount: Int,
     val lastReadVerse: Int
 )

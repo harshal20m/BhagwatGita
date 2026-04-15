@@ -11,7 +11,5 @@
             reading settings) to a new device via device-to-device transfer.
         -->
         <include domain="file" path="datastore" />
-        <!-- But still exclude the seeded DB — it will be re-seeded from assets -->
-        <exclude domain="database" path="gita_database" />
     </device-transfer>
 </data-extraction-rules>
