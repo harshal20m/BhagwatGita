@@ -66,7 +66,8 @@ private fun GitaApp() {
     val showBottomBar = currentDestination?.route in listOf(
         Screen.Home.route,
         Screen.Bookmarks.route,
-        Screen.Search.route
+        Screen.Search.route,
+        Screen.Settings.route
     )
 
     Surface(
@@ -116,7 +117,8 @@ private data class BottomNavItem(
 private val bottomNavItems = listOf(
     BottomNavItem(Screen.Home, "Home", Icons.Filled.Home, Icons.Outlined.Home),
     BottomNavItem(Screen.Bookmarks, "Bookmarks", Icons.Filled.Bookmark, Icons.Outlined.BookmarkBorder),
-    BottomNavItem(Screen.Search, "Search", Icons.Filled.Search, Icons.Outlined.Search)
+    BottomNavItem(Screen.Search, "Search", Icons.Filled.Search, Icons.Outlined.Search),
+    BottomNavItem(Screen.Settings, "Settings", Icons.Filled.Info, Icons.Default.Info)
 )
 
 @Composable

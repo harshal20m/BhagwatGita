@@ -11,6 +11,7 @@ import com.gitaapp.ui.screens.bookmark.BookmarkScreen
 import com.gitaapp.ui.screens.chapter.ChapterScreen
 import com.gitaapp.ui.screens.home.HomeScreen
 import com.gitaapp.ui.screens.search.SearchScreen
+import com.gitaapp.ui.screens.settings.SettingsScreen
 import com.gitaapp.ui.screens.verse.VerseScreen
 
 /**
@@ -23,6 +24,7 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Bookmarks : Screen("bookmarks")
     data object Search : Screen("search")
+    data object Settings : Screen("settings")
 
     // ── Deep destinations ─────────────────────────────────────────────────
     data object Chapter : Screen("chapter/{chapterNumber}") {
@@ -81,6 +83,13 @@ fun GitaNavGraph(
                 onVerseClick = { chapterNumber, verseNumber ->
                     navController.navigate(Screen.Verse.createRoute(chapterNumber, verseNumber))
                 }
+            )
+        }
+
+        // ── Settings screen ────────────────────────────────────────────────
+        composable(route = Screen.Settings.route) {
+            SettingsScreen(
+                onNavigateUp = { navController.navigateUp() }
             )
         }
 
