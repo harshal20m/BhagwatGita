@@ -1,59 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-    Om symbol (ॐ) as an adaptive icon foreground / splash icon.
-    Rendered at 108dp with a transparent background so the splash
-    windowSplashScreenBackground color shows through.
--->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-
-    <!-- Outer circle ring -->
-    <path
-        android:pathData="M54,10 A44,44 0 1,1 53.9,10 Z"
-        android:strokeColor="#B45309"
-        android:strokeWidth="3"
-        android:fillColor="@android:color/transparent" />
-
-    <!-- Om / ॐ symbol — simplified geometric representation -->
-    <!-- Main body of Om -->
-    <path
-        android:pathData="
-            M38,58
-            C38,48 44,40 52,38
-            C58,36 64,38 67,44
-            C70,50 68,58 62,62
-            C58,65 54,64 52,61
-            C50,58 52,54 55,53
-            C58,52 61,54 60,57
-        "
-        android:strokeColor="#B45309"
-        android:strokeWidth="3.5"
-        android:fillColor="@android:color/transparent"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
-
-    <!-- Lower curve of Om -->
-    <path
-        android:pathData="M52,62 C46,66 40,72 42,78 C44,84 52,86 58,82"
-        android:strokeColor="#B45309"
-        android:strokeWidth="3.5"
-        android:fillColor="@android:color/transparent"
-        android:strokeLineCap="round" />
-
-    <!-- Virama / curved tail -->
-    <path
-        android:pathData="M58,35 C62,30 70,30 72,35"
-        android:strokeColor="#B45309"
-        android:strokeWidth="3"
-        android:fillColor="@android:color/transparent"
-        android:strokeLineCap="round" />
-
-    <!-- Chandrabindu dot -->
-    <path
-        android:pathData="M66,26 A2,2 0 1,1 65.9,26 Z"
-        android:fillColor="#B45309" />
-
+    android:width="2501dp"
+    android:height="2501dp"
+    android:viewportWidth="2501"
+    android:viewportHeight="2501">
+  <path
+      android:pathData="M642.9,1454.3C885.5,1872.4 1342.3,1605.4 1183,1418.9C1145.8,1375.3 1080.6,1368.9 1027.6,1382.1L990.8,1246.9C1102.8,1255.6 1234.9,1224.8 1172.3,1084.9C1122.8,974.6 918.6,1022.3 841.1,1158.9L742.7,981.6C1190.9,701 1446,1128.3 1193,1277.1C1193,1277.1 1244.2,1328.3 1266.6,1349.3C1288.9,1370.3 1295.4,1403.1 1333.5,1375.6C1432.2,1304.1 1516.9,1054.3 1724.2,1121.7C1896.6,1177.9 1879.4,1525 1807.5,1657.9C1665.5,1920.3 1429.2,1757 1391.3,1575.1C1612.3,1797.8 1708.6,1684.2 1744.5,1539.4C1766,1452.8 1791.7,1180.5 1624.8,1229.9C1529.8,1258 1471.5,1466.4 1302,1483.2C1374.4,1982 623.5,1935.6 642.9,1454.3"
+      android:fillColor="#000000"
+      android:fillType="evenOdd"/>
+  <path
+      android:pathData="M1167.4,760.4C1309.4,925.4 1475.1,983.1 1640.1,835.3L1745.1,987.6C1465.9,1087.5 1295.7,1036.9 1167.4,760.4"
+      android:fillColor="#000000"
+      android:fillType="evenOdd"/>
+  <path
+      android:pathData="M1366,742.9L1450.2,663.5L1536.2,746.1L1449.7,833.9L1366,742.9"
+      android:fillColor="#000000"
+      android:fillType="evenOdd"/>
 </vector>

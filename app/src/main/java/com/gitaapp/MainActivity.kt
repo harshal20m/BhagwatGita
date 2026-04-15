@@ -98,7 +98,7 @@ private fun GitaApp() {
         ) { innerPadding ->
             GitaNavGraph(
                 navController = navController,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier
             )
         }
     }
