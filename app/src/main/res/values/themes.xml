@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+        Base theme — referenced by the Compose GitaAppTheme.
+        The activity uses Theme.GitaApp.Starting (splash) and then
+        the Compose theme takes over via setContent.
+    -->
+    <style name="Theme.GitaApp" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!--
+        Splash screen theme using the AndroidX core-splashscreen library.
+        installSplashScreen() in MainActivity reads this theme.
+    -->
+    <style name="Theme.GitaApp.Starting" parent="Theme.SplashScreen">
+        <!-- Splash icon background color — saffron gold -->
+        <item name="windowSplashScreenBackground">#FFF8E7</item>
+        <!-- Post-splash activity theme — hands off to Compose -->
+        <item name="postSplashScreenTheme">@style/Theme.GitaApp</item>
+        <!-- Animated icon duration (API 31+) -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_om</item>
+        <item name="windowSplashScreenAnimationDuration">600</item>
+        <!-- Branding image shown below the icon (optional) -->
+        <!-- <item name="windowSplashScreenBrandingImage">@drawable/splash_branding</item> -->
+    </style>
+
+</resources>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bhagavad Gita</string>
+    <string name="app_name_sanskrit">श्रीमद्भगवद्गीता</string>
+
+    <!-- Navigation labels -->
+    <string name="nav_home">Home</string>
+    <string name="nav_bookmarks">Bookmarks</string>
+    <string name="nav_search">Search</string>
+
+    <!-- Home screen -->
+    <string name="home_continue_reading">Continue Reading</string>
+    <string name="home_verse_of_the_day">Verse of the Day</string>
+    <string name="home_all_chapters">18 Chapters</string>
+    <string name="home_refresh_verse">Refresh verse</string>
+    <string name="home_overall_progress">Overall Progress</string>
+
+    <!-- Chapter screen -->
+    <string name="chapter_verses_count">%1$d verses</string>
+    <string name="chapter_progress">Progress</string>
+
+    <!-- Verse screen -->
+    <string name="verse_label">Verse %1$s</string>
+    <string name="section_sanskrit">Sanskrit</string>
+    <string name="section_transliteration">Transliteration</string>
+    <string name="section_translation">Translation</string>
+    <string name="section_word_meanings">Word Meanings</string>
+    <string name="section_commentary">Commentary (हिन्दी)</string>
+    <string name="verse_prev">Previous verse</string>
+    <string name="verse_next">Next verse</string>
+    <string name="verse_count_of">%1$d / %2$d</string>
+
+    <!-- Bookmark screen -->
+    <string name="bookmark_empty_title">No bookmarks yet</string>
+    <string name="bookmark_empty_subtitle">Tap the bookmark icon on any verse to save it here for quick access.</string>
+    <string name="bookmark_remove">Remove bookmark</string>
+    <string name="bookmark_add">Add bookmark</string>
+
+    <!-- Search screen -->
+    <string name="search_hint">Search verses, translations, meanings…</string>
+    <string name="search_clear">Clear search</string>
+    <string name="search_idle_title">Search the Gita</string>
+    <string name="search_idle_subtitle">Enter a keyword to search across all 701 verses</string>
+    <string name="search_empty_title">No results found</string>
+    <string name="search_empty_subtitle">Try different keywords — search works across translations, transliterations, and word meanings.</string>
+    <string name="search_results_count">%1$d results</string>
+    <string name="search_result_count_single">1 result</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_chapter_number">Chapter number</string>
+    <string name="cd_navigate_up">Navigate up</string>
+    <string name="cd_navigate_back">Go back</string>
+    <string name="cd_bookmark_filled">Remove bookmark</string>
+    <string name="cd_bookmark_outline">Add bookmark</string>
+    <string name="cd_delete_bookmark">Delete bookmark</string>
+    <string name="cd_continue_reading">Continue reading chapter %1$d verse %2$d</string>
+    <string name="cd_verse_of_the_day">Verse of the day — tap to read</string>
+</resources>

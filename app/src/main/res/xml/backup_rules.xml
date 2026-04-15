@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Backup rules — exclude the Room database from Auto Backup.
+    The database is always re-seeded from assets, so backing it up
+    would waste quota and could cause version conflicts after updates.
+    Bookmarks and reading progress ARE backed up via DataStore preferences.
+-->
+<full-backup-content>
+    <!-- Exclude the Room WAL and SHM temp files -->
+    <exclude domain="database" path="gita_database" />
+    <exclude domain="database" path="gita_database-shm" />
+    <exclude domain="database" path="gita_database-wal" />
+    <!-- Keep DataStore preferences (bookmarks, reading progress in preferences) -->
+    <!-- DataStore files live in files/datastore/ — included by default -->
+</full-backup-content>
