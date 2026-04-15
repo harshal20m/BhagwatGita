@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,13 +32,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.gitaapp.ui.navigation.GitaNavGraph
 import com.gitaapp.ui.navigation.Screen
+import com.gitaapp.ui.screens.settings.SettingsViewModel
 import com.gitaapp.ui.theme.GitaAppTheme
+import com.gitaapp.data.model.ThemeMode
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -61,6 +66,16 @@ private fun GitaApp() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val preferencesViewModel: SettingsViewModel = hiltViewModel()
+    val uiState by preferencesViewModel.uiState.collectAsState()
+
+    // Determine dark theme based on user preference
+    val isSystemInDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val darkTheme = when (uiState.themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDark
+    }
 
     // Only show bottom nav on top-level destinations
     val showBottomBar = currentDestination?.route in listOf(
@@ -74,33 +89,38 @@ private fun GitaApp() {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Scaffold(
-            bottomBar = {
-                AnimatedVisibility(
-                    visible = showBottomBar,
-                    enter = slideInVertically(initialOffsetY = { it }),
-                    exit = slideOutVertically(targetOffsetY = { it })
-                ) {
-                    GitaBottomNavBar(
-                        currentRoute = currentDestination?.route,
-                        onNavigate = { screen ->
-                            navController.navigate(screen.route) {
-                                // Pop up to the start destination to avoid stacking
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+        GitaAppTheme(
+            darkTheme = darkTheme,
+            dynamicColor = false // Disable dynamic color to use our spiritual palette
+        ) {
+            Scaffold(
+                bottomBar = {
+                    AnimatedVisibility(
+                        visible = showBottomBar,
+                        enter = slideInVertically(initialOffsetY = { it }),
+                        exit = slideOutVertically(targetOffsetY = { it })
+                    ) {
+                        GitaBottomNavBar(
+                            currentRoute = currentDestination?.route,
+                            onNavigate = { screen ->
+                                navController.navigate(screen.route) {
+                                    // Pop up to the start destination to avoid stacking
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
-                        }
-                    )
+                        )
+                    }
                 }
+            ) { innerPadding ->
+                GitaNavGraph(
+                    navController = navController,
+                    modifier = Modifier.padding(innerPadding)
+                )
             }
-        ) { innerPadding ->
-            GitaNavGraph(
-                navController = navController,
-                modifier = Modifier.padding(innerPadding)
-            )
         }
     }
 }
@@ -118,7 +138,7 @@ private val bottomNavItems = listOf(
     BottomNavItem(Screen.Home, "Home", Icons.Filled.Home, Icons.Outlined.Home),
     BottomNavItem(Screen.Bookmarks, "Bookmarks", Icons.Filled.Bookmark, Icons.Outlined.BookmarkBorder),
     BottomNavItem(Screen.Search, "Search", Icons.Filled.Search, Icons.Outlined.Search),
-    BottomNavItem(Screen.Settings, "Settings", Icons.Filled.Info, Icons.Default.Info)
+    BottomNavItem(Screen.Settings, "Settings", Icons.Filled.Info, Icons.Outlined.Info)
 )
 
 @Composable

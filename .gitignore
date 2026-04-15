@@ -1,21 +1,35 @@
 ```
-# Compiled and build artifacts
+# Kotlin/Android build artifacts
 *.class
-*.o
-*.obj
-*.exe
-*.dll
-*.so
-*.a
-*.out
+*.jar
+*.war
+*.aar
+*.apk
+*.dex
 
-# Dependencies
-.gradle/
+# Build directories
 build/
+.gradle/
+.externalNativeBuild/
+.cxx/
 
-# Logs and temp files
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# Local configuration
+local.properties
+gradle.properties
+
+# Log files
 *.log
+
+# Temporary files
 *.tmp
+*.temp
 *.swp
 
 # Environment
@@ -23,54 +37,26 @@ build/
 .env.local
 *.env.*
 
-# Editors
-.vscode/
-.idea/
-
 # Coverage reports
 coverage/
 htmlcov/
 *.coverage
 
-# Package manager
-node_modules/
-
-# Virtual environments
-venv/
-.venv/
+# Python artifacts (if any Python in project)
 __pycache__/
-.mypy_cache/
+*.pyc
+*.pyo
+*.pyd
 .pytest_cache/
+.mypy_cache/
 
-# Distribution / packaging
-dist/
-target/
+# Node.js (if any JS in project)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# System files
+# OS generated files
 .DS_Store
 Thumbs.db
-
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
 ```
