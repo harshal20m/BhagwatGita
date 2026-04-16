@@ -18,12 +18,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gitaapp.data.model.AppLanguage
 import com.gitaapp.data.model.Chapter
 import com.gitaapp.data.model.ReadingProgress
 import com.gitaapp.data.model.Verse
@@ -41,67 +46,119 @@ fun HomeScreen(
     val uiState       by viewModel.uiState.collectAsStateWithLifecycle()
     val verseOfTheDay by viewModel.verseOfTheDay.collectAsStateWithLifecycle()
 
-    LazyColumn(
-        modifier      = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 120.dp, top = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // ── Header ────────────────────────────────────────────────────────
-        item(key = "header") { GitaHeader(overallProgress = uiState.overallProgress) }
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val isScrolling by remember { derivedStateOf { scrollBehavior.state.contentOffset != 0f && scrollBehavior.state.heightOffset != 0f && scrollBehavior.state.heightOffset != scrollBehavior.state.heightOffsetLimit } }
 
-        // ── Continue reading ──────────────────────────────────────────────
-        uiState.lastReadProgress?.let { progress ->
-            item(key = "continue") {
-                ContinueReadingBanner(progress, onClick = {
-                    onContinueReading(progress.chapterNumber, progress.lastReadVerseNumber)
-                }, modifier = Modifier.padding(horizontal = 16.dp))
-            }
+    // This effect ensures the header snaps back when scrolling stops
+    LaunchedEffect(scrollBehavior.state.contentOffset) {
+        if (scrollBehavior.state.contentOffset == 0f) {
+            scrollBehavior.state.heightOffset = 0f
         }
+    }
 
-        // ── Verse of the day ──────────────────────────────────────────────
-        verseOfTheDay?.let { verse ->
-            item(key = "votd") {
-                VerseOfTheDayCard(verse, onRefresh = viewModel::refreshVerseOfTheDay,
-                    onClick = { onContinueReading(verse.chapterNumber, verse.verseNumber) },
-                    modifier = Modifier.padding(horizontal = 16.dp))
-            }
-        }
+    var headerHeight by remember { mutableFloatStateOf(0f) }
 
-        // ── Dot-matrix chapter navigator ──────────────────────────────────
-        when (val st = uiState.chaptersState) {
-            is ChaptersState.Success -> {
-                item(key = "chapter_nav_header") {
-                    Text("Navigate Chapters",
-                        style    = MaterialTheme.typography.titleMedium,
-                        color    = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
-                }
-                item(key = "dot_matrix") {
-                    ChapterDotMatrix(
-                        chapters         = st.chapters,
-                        onChapterClick   = onChapterClick,
-                        onVerseClick     = onVerseInChapterClick,
-                        modifier         = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
-                item(key = "chapters_list_header") {
-                    Text("All Chapters",
-                        style    = MaterialTheme.typography.titleMedium,
-                        color    = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
-                }
-                items(items = st.chapters, key = { it.number }) { chapter ->
-                    ChapterRowCard(chapter = chapter, onClick = { onChapterClick(chapter.number) },
-                        modifier = Modifier.padding(horizontal = 16.dp))
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+    ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(bottom = innerPadding.calculateBottomPadding())) {
+            val lazyListState = rememberLazyListState()
+
+            // Automatically snap header back when scroll stops
+            LaunchedEffect(lazyListState.isScrollInProgress) {
+                if (!lazyListState.isScrollInProgress) {
+                    scrollBehavior.state.heightOffset = 0f
                 }
             }
-            is ChaptersState.Loading -> {
-                items(count = 6, key = { "sh_$it" }) {
-                    ChapterCardShimmer(modifier = Modifier.padding(horizontal = 16.dp))
+
+            LazyColumn(
+                state         = lazyListState,
+                modifier      = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = with(LocalDensity.current) { headerHeight.toDp() } + 8.dp,
+                    bottom = 120.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // ── Continue reading ──────────────────────────────────────────────
+                uiState.lastReadProgress?.let { progress ->
+                    item(key = "continue") {
+                        ContinueReadingBanner(progress, onClick = {
+                            onContinueReading(progress.chapterNumber, progress.lastReadVerseNumber)
+                        }, modifier = Modifier.padding(horizontal = 16.dp))
+                    }
+                }
+
+                // ── Verse of the day ──────────────────────────────────────────────
+                verseOfTheDay?.let { verse ->
+                    item(key = "votd") {
+                        val translation = if (uiState.language == AppLanguage.HINDI) verse.translationHi else verse.translation
+                        VerseOfTheDayCard(
+                            verse       = verse,
+                            translation = translation,
+                            onRefresh   = viewModel::refreshVerseOfTheDay,
+                            onClick     = { onContinueReading(verse.chapterNumber, verse.verseNumber) },
+                            modifier    = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+                }
+
+                // ── Dot-matrix chapter navigator ──────────────────────────────────
+                when (val st = uiState.chaptersState) {
+                    is ChaptersState.Success -> {
+                        item(key = "chapter_nav_header") {
+                            Text("Navigate Chapters",
+                                style    = MaterialTheme.typography.titleMedium,
+                                color    = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
+                        }
+                        item(key = "dot_matrix") {
+                            ChapterDotMatrix(
+                                chapters         = st.chapters,
+                                onChapterClick   = onChapterClick,
+                                onVerseClick     = onVerseInChapterClick,
+                                modifier         = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+                        item(key = "chapters_list_header") {
+                            Text("All Chapters",
+                                style    = MaterialTheme.typography.titleMedium,
+                                color    = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
+                        }
+                        items(items = st.chapters, key = { it.number }) { chapter ->
+                            ChapterRowCard(chapter = chapter, onClick = { onChapterClick(chapter.number) },
+                                modifier = Modifier.padding(horizontal = 16.dp))
+                        }
+                    }
+                    is ChaptersState.Loading -> {
+                        items(count = 6, key = { "sh_$it" }) {
+                            ChapterCardShimmer(modifier = Modifier.padding(horizontal = 16.dp))
+                        }
+                    }
+                    is ChaptersState.Error -> item {
+                        EmptyState("🕉", "Could not load chapters", st.message)
+                    }
                 }
             }
-            is ChaptersState.Error -> item {
-                EmptyState("🕉", "Could not load chapters", st.message)
+
+            // Smoothly hiding header
+            Surface(
+                color = MaterialTheme.colorScheme.background,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer { translationY = scrollBehavior.state.heightOffset }
+                    .onGloballyPositioned { layoutCoordinates ->
+                        val height = layoutCoordinates.size.height.toFloat()
+                        headerHeight = height
+                        if (scrollBehavior.state.heightOffsetLimit != -height) {
+                            scrollBehavior.state.heightOffsetLimit = -height
+                        }
+                    }
+            ) {
+                Column(modifier = Modifier.statusBarsPadding().padding(top = 16.dp, bottom = 12.dp)) {
+                    GitaHeader(overallProgress = uiState.overallProgress)
+                }
             }
         }
     }
@@ -166,7 +223,13 @@ private fun ContinueReadingBanner(progress: ReadingProgress, onClick: () -> Unit
 // ── Verse of the Day ──────────────────────────────────────────────────────────
 
 @Composable
-private fun VerseOfTheDayCard(verse: Verse, onRefresh: () -> Unit, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun VerseOfTheDayCard(
+    verse: Verse,
+    translation: String,
+    onRefresh: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
         elevation = CardDefaults.cardElevation(0.dp)) {
@@ -195,8 +258,8 @@ private fun VerseOfTheDayCard(verse: Verse, onRefresh: () -> Unit, onClick: () -
             Spacer(Modifier.height(10.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f))
             Spacer(Modifier.height(10.dp))
-            // Full translation — no artificial maxLines
-            Text(verse.translation, style = MaterialTheme.typography.bodySmall,
+            // Full translation (Hindi/English based on settings)
+            Text(translation, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f))
         }
     }

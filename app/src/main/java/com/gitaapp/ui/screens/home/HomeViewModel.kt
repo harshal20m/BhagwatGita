@@ -60,11 +60,10 @@ class HomeViewModel @Inject constructor(
     val verseOfTheDay: StateFlow<Verse?> = _verseOfTheDay
 
     init {
-        loadVerseOfTheDay()
         // Ensure we load the verse once data is available (e.g., after first-time seeding)
         viewModelScope.launch {
-            repository.observeAllChapters().collect { chapters ->
-                if (chapters.isNotEmpty() && _verseOfTheDay.value == null) {
+            repository.observeVerseCount().collect { count ->
+                if (count > 0 && _verseOfTheDay.value == null) {
                     loadVerseOfTheDay()
                 }
             }

@@ -73,6 +73,9 @@ data class VerseEntity(
     @ColumnInfo(name = "translation")
     val translation: String,
 
+    @ColumnInfo(name = "translation_hi")
+    val translationHi: String,
+
     @ColumnInfo(name = "commentary")
     val commentary: String
 )

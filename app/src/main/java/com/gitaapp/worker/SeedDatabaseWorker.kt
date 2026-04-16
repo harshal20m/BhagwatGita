@@ -60,6 +60,23 @@ class SeedDatabaseWorker @AssistedInject constructor(
             val verseEntities = versesData.map { it.toEntity() }
             verseDao.insertAll(verseEntities)
 
+            // Update widget after seeding
+            try {
+                val verse = verseDao.getRandomVerse()
+                if (verse != null) {
+                    com.gitaapp.widget.VerseOfDayWidgetUpdater.update(
+                        context = applicationContext,
+                        verseRef = "${verse.chapterNumber}.${verse.verseNumber}",
+                        sanskrit = verse.sanskritText,
+                        translationEn = verse.translation,
+                        translationHi = verse.translationHi,
+                        language = "ENGLISH" // Default
+                    )
+                }
+            } catch (e: Exception) {
+                // Ignore widget update errors
+            }
+
             Result.success()
         } catch (e: Exception) {
             if (runAttemptCount < MAX_RETRIES) {
@@ -117,6 +134,7 @@ private data class VerseJson(
         transliteration = transliteration,
         wordMeanings = wordMeanings,
         translation = translation,
+        translationHi = commentary,
         commentary = commentary
     )
 }

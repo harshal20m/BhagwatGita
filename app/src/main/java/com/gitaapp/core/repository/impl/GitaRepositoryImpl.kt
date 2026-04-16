@@ -49,6 +49,9 @@ class GitaRepositoryImpl @Inject constructor(
     override fun observeVerse(verseId: String): Flow<Verse?> =
         verseDao.observeVerse(verseId).map { it?.toDomain() }
 
+    override fun observeVerseCount(): Flow<Int> =
+        verseDao.observeVerseCount()
+
     override suspend fun getRandomVerse(): Verse? =
         verseDao.getRandomVerse()?.toDomain()
 
@@ -136,6 +139,7 @@ class GitaRepositoryImpl @Inject constructor(
         transliteration = transliteration,
         wordMeanings = wordMeanings,
         translation = translation,
+        translationHi = translationHi,
         commentary = commentary,
         isBookmarked = isBookmarked
     )

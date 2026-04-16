@@ -30,6 +30,9 @@ interface GitaRepository {
     /** Observe a single verse by its composite ID (e.g. "1.1"). */
     fun observeVerse(verseId: String): Flow<Verse?>
 
+    /** Observe total verse count. */
+    fun observeVerseCount(): Flow<Int>
+
     /** Get a random verse — for "Verse of the Day" feature. */
     suspend fun getRandomVerse(): Verse?
 

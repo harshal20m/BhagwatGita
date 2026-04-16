@@ -91,12 +91,15 @@ class GitaApplication : Application(), Configuration.Provider {
      */
     private fun refreshWidget() {
         appScope.launch {
+            val prefs = preferencesManager.readingPreferences.first()
             val verse = repository.getRandomVerse() ?: return@launch
             VerseOfDayWidgetUpdater.update(
-                context     = this@GitaApplication,
-                verseRef    = "${verse.chapterNumber}.${verse.verseNumber}",
-                sanskrit    = verse.sanskritText,
-                translation = verse.translation
+                context       = this@GitaApplication,
+                verseRef      = "${verse.chapterNumber}.${verse.verseNumber}",
+                sanskrit      = verse.sanskritText,
+                translationEn = verse.translation,
+                translationHi = verse.translationHi,
+                language      = prefs.language.name
             )
         }
     }

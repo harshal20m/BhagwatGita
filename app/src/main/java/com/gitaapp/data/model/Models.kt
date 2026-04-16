@@ -23,6 +23,7 @@ data class Verse(
     val transliteration: String,
     val wordMeanings: String,
     val translation: String,
+    val translationHi: String,
     val commentary: String,
     val isBookmarked: Boolean = false
 )
@@ -185,40 +186,52 @@ data class RashiInfo(
                 "करुणामय, कलात्मक और बुद्धिमान। गहरे अंतर्ज्ञान और आध्यात्मिक झुकाव वाले।")
         )
 
-        // Vedic rashi from date of birth (sun-sign style month/day boundaries)
+        // Vedic rashi from date of birth (standard Hindu rashi entry dates)
         fun fromDob(day: Int, month: Int): RashiInfo {
             val idx = when (month) {
-                1  -> if (day >= 20) 9  else 8   // Jan20+ Aquarius, else Capricorn
-                2  -> if (day >= 19) 10 else 9   // Feb19+ Pisces
-                3  -> if (day >= 21) 0  else 10  // Mar21+ Aries
-                4  -> if (day >= 20) 1  else 0
-                5  -> if (day >= 21) 2  else 1
-                6  -> if (day >= 21) 3  else 2
-                7  -> if (day >= 23) 4  else 3
-                8  -> if (day >= 23) 5  else 4
-                9  -> if (day >= 23) 6  else 5
-                10 -> if (day >= 23) 7  else 6
-                11 -> if (day >= 22) 8  else 7
-                12 -> if (day >= 22) 9  else 8
+                1  -> if (day >= 14) 9  else 8   // Jan 14+ Capricorn (Makara)
+                2  -> if (day >= 13) 10 else 9   // Feb 13+ Aquarius (Kumbha)
+                3  -> if (day >= 14) 11 else 10  // Mar 14+ Pisces (Meena)
+                4  -> if (day >= 14) 0  else 11  // Apr 14+ Aries (Mesha)
+                5  -> if (day >= 15) 1  else 0   // May 15+ Taurus (Vrishabha)
+                6  -> if (day >= 15) 2  else 1   // Jun 15+ Gemini (Mithuna)
+                7  -> if (day >= 16) 3  else 2   // Jul 16+ Cancer (Karka)
+                8  -> if (day >= 17) 4  else 3   // Aug 17+ Leo (Simha)
+                9  -> if (day >= 17) 5  else 4   // Sep 17+ Virgo (Kanya)
+                10 -> if (day >= 17) 6  else 5   // Oct 17+ Libra (Tula)
+                11 -> if (day >= 16) 7  else 6   // Nov 16+ Scorpio (Vrishchika)
+                12 -> if (day >= 16) 8  else 7   // Dec 16+ Sagittarius (Dhanu)
                 else -> 0
             }
             return ALL[idx]
         }
 
-        // Naam rashi from first letter of name (traditional akshar map)
+        // Naam rashi from first letter of name (traditional Hindu akshar map)
         private val LETTER_MAP: Map<Char, Int> = buildMap {
-            for (c in "AEI")   put(c, 0)   // Aries
-            for (c in "BVUW")  put(c, 1)   // Taurus
-            for (c in "KCG")   put(c, 2)   // Gemini
-            for (c in "DH")    put(c, 3)   // Cancer
-            for (c in "ML")    put(c, 4)   // Leo
-            for (c in "PFTO")  put(c, 5)   // Virgo
-            for (c in "R")     put(c, 6)   // Libra
-            for (c in "NYS")   put(c, 7)   // Scorpio
-            for (c in "BFX")   put(c, 8)   // Sagittarius
-            for (c in "JQ")    put(c, 9)   // Capricorn
-            for (c in "GSZ")   put(c, 10)  // Aquarius
-            for (c in "CTH")   put(c, 11)  // Pisces
+            // Aries (Mesha): A, L, E
+            listOf('A', 'L', 'E').forEach { put(it, 0) }
+            // Taurus (Vrishabha): B, V, U, W
+            listOf('B', 'V', 'U', 'W').forEach { put(it, 1) }
+            // Gemini (Mithuna): K, CH, G, D (Partial overlaps handled by primary)
+            listOf('K', 'G').forEach { put(it, 2) }
+            // Cancer (Karka): D, H
+            listOf('D', 'H').forEach { put(it, 3) }
+            // Leo (Simha): M, T
+            listOf('M', 'T').forEach { put(it, 4) }
+            // Virgo (Kanya): P, SH, N
+            listOf('P').forEach { put(it, 5) }
+            // Libra (Tula): R, T
+            listOf('R').forEach { put(it, 6) }
+            // Scorpio (Vrishchika): N, Y
+            listOf('N', 'Y').forEach { put(it, 7) }
+            // Sagittarius (Dhanu): BH, DH, PH, F
+            listOf('F').forEach { put(it, 8) }
+            // Capricorn (Makara): KH, J
+            listOf('J').forEach { put(it, 9) }
+            // Aquarius (Kumbha): G, S, SH
+            listOf('S').forEach { put(it, 10) }
+            // Pisces (Meena): D, CH, Z, TH
+            listOf('Z').forEach { put(it, 11) }
         }
 
         fun fromNameInitial(c: Char): RashiInfo = ALL[LETTER_MAP[c] ?: 0]

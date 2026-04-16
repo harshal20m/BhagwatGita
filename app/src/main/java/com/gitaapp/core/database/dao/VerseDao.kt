@@ -14,7 +14,7 @@ interface VerseDao {
     @Query("""
         SELECT v.verse_id, v.chapter_number, v.verse_number,
                v.sanskrit_text, v.transliteration, v.word_meanings,
-               v.translation, v.commentary,
+               v.translation, v.translation_hi, v.commentary,
                CASE WHEN b.verse_id IS NOT NULL THEN 1 ELSE 0 END AS is_bookmarked
         FROM verses v
         LEFT JOIN bookmarks b ON v.verse_id = b.verse_id
@@ -26,7 +26,7 @@ interface VerseDao {
     @Query("""
         SELECT v.verse_id, v.chapter_number, v.verse_number,
                v.sanskrit_text, v.transliteration, v.word_meanings,
-               v.translation, v.commentary,
+               v.translation, v.translation_hi, v.commentary,
                CASE WHEN b.verse_id IS NOT NULL THEN 1 ELSE 0 END AS is_bookmarked
         FROM verses v
         LEFT JOIN bookmarks b ON v.verse_id = b.verse_id
@@ -40,11 +40,12 @@ interface VerseDao {
     @Query("""
         SELECT v.verse_id, v.chapter_number, v.verse_number,
                v.sanskrit_text, v.transliteration, v.word_meanings,
-               v.translation, v.commentary,
+               v.translation, v.translation_hi, v.commentary,
                CASE WHEN b.verse_id IS NOT NULL THEN 1 ELSE 0 END AS is_bookmarked
         FROM verses v
         LEFT JOIN bookmarks b ON v.verse_id = b.verse_id
         WHERE v.translation LIKE '%' || :query || '%'
+           OR v.translation_hi LIKE '%' || :query || '%'
            OR v.commentary  LIKE '%' || :query || '%'
            OR v.transliteration LIKE '%' || :query || '%'
         ORDER BY v.chapter_number ASC, v.verse_number ASC
@@ -55,7 +56,7 @@ interface VerseDao {
     @Query("""
         SELECT v.verse_id, v.chapter_number, v.verse_number,
                v.sanskrit_text, v.transliteration, v.word_meanings,
-               v.translation, v.commentary,
+               v.translation, v.translation_hi, v.commentary,
                CASE WHEN b.verse_id IS NOT NULL THEN 1 ELSE 0 END AS is_bookmarked
         FROM verses v
         LEFT JOIN bookmarks b ON v.verse_id = b.verse_id
@@ -63,6 +64,9 @@ interface VerseDao {
         LIMIT 1
     """)
     suspend fun getRandomVerse(): VerseWithBookmark?
+
+    @Query("SELECT COUNT(*) FROM verses")
+    fun observeVerseCount(): Flow<Int>
 }
 
 data class VerseWithBookmark(
@@ -73,6 +77,7 @@ data class VerseWithBookmark(
     @ColumnInfo(name = "transliteration")val transliteration: String,
     @ColumnInfo(name = "word_meanings")  val wordMeanings: String,
     @ColumnInfo(name = "translation")    val translation: String,
+    @ColumnInfo(name = "translation_hi") val translationHi: String,
     @ColumnInfo(name = "commentary")     val commentary: String,
     @ColumnInfo(name = "is_bookmarked")  val isBookmarked: Boolean
 )
