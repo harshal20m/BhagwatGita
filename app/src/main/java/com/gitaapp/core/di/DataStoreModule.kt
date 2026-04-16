@@ -47,6 +47,8 @@ class PreferencesManager @Inject constructor(private val dataStore: DataStore<Pr
         val PROFILE_DOB_MONTH      = intPreferencesKey("profile_dob_month")
         val PROFILE_DOB_YEAR       = intPreferencesKey("profile_dob_year")
         val PROFILE_IS_SETUP       = booleanPreferencesKey("profile_is_setup")
+        val VOTD_VERSE_ID          = stringPreferencesKey("votd_verse_id")
+        val VOTD_LAST_UPDATE_DAY   = longPreferencesKey("votd_last_update_day")
     }
 
     val readingPreferences: Flow<ReadingPreferences> = dataStore.data.map { p ->
@@ -84,14 +86,31 @@ class PreferencesManager @Inject constructor(private val dataStore: DataStore<Pr
         (p[Keys.SEARCH_HISTORY] ?: "").split("|").filter { it.isNotBlank() }.take(10)
     }
 
+    val verseOfTheDayId: Flow<String?> = dataStore.data.map { it[Keys.VOTD_VERSE_ID] }
+    val verseOfTheDayLastUpdate: Flow<Long> = dataStore.data.map { it[Keys.VOTD_LAST_UPDATE_DAY] ?: 0L }
+
     // ── Setters ───────────────────────────────────────────────────────────────
+    suspend fun setVerseOfTheDay(verseId: String, day: Long) {
+        dataStore.edit {
+            it[Keys.VOTD_VERSE_ID] = verseId
+            it[Keys.VOTD_LAST_UPDATE_DAY] = day
+        }
+    }
     suspend fun setFontSize(v: FontSize)            { dataStore.edit { it[Keys.FONT_SIZE] = v.name } }
     suspend fun setShowTransliteration(v: Boolean)  { dataStore.edit { it[Keys.SHOW_TRANSLITERATION] = v } }
     suspend fun setShowWordMeanings(v: Boolean)      { dataStore.edit { it[Keys.SHOW_WORD_MEANINGS] = v } }
     suspend fun setShowCommentary(v: Boolean)        { dataStore.edit { it[Keys.SHOW_COMMENTARY] = v } }
     suspend fun setThemeMode(v: ThemeMode)           { dataStore.edit { it[Keys.THEME_MODE] = v.name } }
     suspend fun setAppTheme(v: AppTheme)             { dataStore.edit { it[Keys.APP_THEME] = v.name } }
-    suspend fun setLanguage(v: AppLanguage)          { dataStore.edit { it[Keys.LANGUAGE] = v.name } }
+    @Inject @ApplicationContext lateinit var context: Context
+
+    suspend fun setLanguage(v: AppLanguage) {
+        dataStore.edit { it[Keys.LANGUAGE] = v.name }
+        // Update widget language preference
+        try {
+            com.gitaapp.widget.VerseOfDayWidgetUpdater.updateLanguage(context, v.name)
+        } catch (e: Exception) { }
+    }
     suspend fun setFocusMode(v: Boolean)             { dataStore.edit { it[Keys.FOCUS_MODE] = v } }
     suspend fun setDailyReminder(v: Boolean)         { dataStore.edit { it[Keys.DAILY_REMINDER] = v } }
     suspend fun setReminderTime(h: Int, m: Int)      { dataStore.edit { it[Keys.REMINDER_HOUR] = h; it[Keys.REMINDER_MINUTE] = m } }

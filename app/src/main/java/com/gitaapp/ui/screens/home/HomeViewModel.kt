@@ -60,19 +60,48 @@ class HomeViewModel @Inject constructor(
     val verseOfTheDay: StateFlow<Verse?> = _verseOfTheDay
 
     init {
-        // Ensure we load the verse once data is available (e.g., after first-time seeding)
         viewModelScope.launch {
-            repository.observeVerseCount().collect { count ->
-                if (count > 0 && _verseOfTheDay.value == null) {
-                    loadVerseOfTheDay()
+            combine(
+                repository.observeVerseCount(),
+                prefsManager.verseOfTheDayId,
+                prefsManager.verseOfTheDayLastUpdate
+            ) { count, savedId, lastUpdate ->
+                Triple(count, savedId, lastUpdate)
+            }.collect { (count, savedId, lastUpdate) ->
+                if (count > 0) {
+                    val today = getTodayMillis()
+                    if (savedId != null && lastUpdate == today) {
+                        // Load saved verse
+                        if (_verseOfTheDay.value?.id != savedId) {
+                            repository.observeVerse(savedId).collect { verse ->
+                                _verseOfTheDay.value = verse
+                            }
+                        }
+                    } else {
+                        // Refresh verse for the new day
+                        refreshVerseOfTheDay()
+                    }
                 }
             }
         }
     }
 
-    fun refreshVerseOfTheDay() { loadVerseOfTheDay() }
+    fun refreshVerseOfTheDay() {
+        viewModelScope.launch {
+            val verse = repository.getRandomVerse()
+            if (verse != null) {
+                _verseOfTheDay.value = verse
+                prefsManager.setVerseOfTheDay(verse.id, getTodayMillis())
+            }
+        }
+    }
 
-    private fun loadVerseOfTheDay() {
-        viewModelScope.launch { _verseOfTheDay.value = repository.getRandomVerse() }
+    private fun getTodayMillis(): Long {
+        return java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
     }
 }

@@ -63,14 +63,25 @@ class SeedDatabaseWorker @AssistedInject constructor(
             // Update widget after seeding
             try {
                 val verse = verseDao.getRandomVerse()
+                val chapter = if (verse != null) chapterDao.getChapter(verse.chapterNumber) else null
                 if (verse != null) {
+                    val today = java.util.Calendar.getInstance().let {
+                        it.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                        it.set(java.util.Calendar.MINUTE, 0)
+                        it.set(java.util.Calendar.SECOND, 0)
+                        it.set(java.util.Calendar.MILLISECOND, 0)
+                        it.timeInMillis
+                    }
                     com.gitaapp.widget.VerseOfDayWidgetUpdater.update(
                         context = applicationContext,
                         verseRef = "${verse.chapterNumber}.${verse.verseNumber}",
+                        chapterName = chapter?.nameTransliterated ?: "Chapter ${verse.chapterNumber}",
                         sanskrit = verse.sanskritText,
                         translationEn = verse.translation,
                         translationHi = verse.translationHi,
-                        language = "ENGLISH" // Default
+                        language = "ENGLISH", // Default
+                        isBookmarked = false,
+                        updateDay = today
                     )
                 }
             } catch (e: Exception) {

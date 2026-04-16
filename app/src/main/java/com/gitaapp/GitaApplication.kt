@@ -1,6 +1,10 @@
 package com.gitaapp
 
 import android.app.Application
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.getAppWidgetState
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.appwidget.updateAll
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.Constraints
@@ -10,6 +14,8 @@ import androidx.work.WorkManager
 import com.gitaapp.core.di.PreferencesManager
 import com.gitaapp.core.repository.GitaRepository
 import com.gitaapp.notification.NotificationScheduler
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import com.gitaapp.widget.VerseOfDayWidget
 import com.gitaapp.widget.VerseOfDayWidgetUpdater
 import com.gitaapp.worker.SeedDatabaseWorker
 import dagger.hilt.android.HiltAndroidApp
@@ -22,10 +28,6 @@ import javax.inject.Inject
 
 /**
  * Application entry point.
- *
- * On first install: seeds Room database from bundled JSON assets via WorkManager.
- * On every launch:  schedules (or cancels) the daily notification based on user prefs,
- *                   and refreshes any active home-screen widgets with a fresh verse.
  */
 @HiltAndroidApp
 class GitaApplication : Application(), Configuration.Provider {
@@ -35,7 +37,6 @@ class GitaApplication : Application(), Configuration.Provider {
     @Inject lateinit var notificationScheduler: NotificationScheduler
     @Inject lateinit var repository: GitaRepository
 
-    /** Application-scoped coroutine scope that outlives any individual ViewModel. */
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override val workManagerConfiguration: Configuration
@@ -48,10 +49,8 @@ class GitaApplication : Application(), Configuration.Provider {
         super.onCreate()
         scheduleDatabaseSeed()
         applyNotificationPreferences()
-        refreshWidget()
+        refreshWidget(force = false)
     }
-
-    // ── One-shot DB seed ──────────────────────────────────────────────────────
 
     private fun scheduleDatabaseSeed() {
         val request = OneTimeWorkRequestBuilder<SeedDatabaseWorker>()
@@ -64,13 +63,6 @@ class GitaApplication : Application(), Configuration.Provider {
         )
     }
 
-    // ── Notification scheduling ───────────────────────────────────────────────
-
-    /**
-     * Reads the user's saved notification preferences and either schedules or
-     * cancels the daily reminder accordingly.  Runs once on each app launch so
-     * the schedule always reflects the latest saved time.
-     */
     private fun applyNotificationPreferences() {
         appScope.launch {
             val prefs = preferencesManager.readingPreferences.first()
@@ -82,25 +74,93 @@ class GitaApplication : Application(), Configuration.Provider {
         }
     }
 
-    // ── Widget refresh ────────────────────────────────────────────────────────
-
-    /**
-     * Pushes a fresh random verse into all active Verse-of-the-Day widget instances.
-     * Called on launch so the widget is always up to date without waiting for the
-     * next system appwidget update broadcast.
-     */
-    private fun refreshWidget() {
+    fun refreshWidget(force: Boolean = false) {
         appScope.launch {
             val prefs = preferencesManager.readingPreferences.first()
+            val today = java.util.Calendar.getInstance().let {
+                it.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                it.set(java.util.Calendar.MINUTE, 0)
+                it.set(java.util.Calendar.SECOND, 0)
+                it.set(java.util.Calendar.MILLISECOND, 0)
+                it.timeInMillis
+            }
+
+            if (!force) {
+                // Check if we already have a verse for today in preferences
+                val savedVerseId = preferencesManager.verseOfTheDayId.first()
+                val lastUpdate = preferencesManager.verseOfTheDayLastUpdate.first()
+
+                if (savedVerseId != null && lastUpdate == today) {
+                    val verse = repository.observeVerse(savedVerseId).first()
+                    val chapter = verse?.let { repository.observeChapter(it.chapterNumber).first() }
+                    
+                    if (verse != null) {
+                        VerseOfDayWidgetUpdater.update(
+                            context       = this@GitaApplication,
+                            verseRef      = verse.id,
+                            chapterName   = chapter?.nameTransliterated ?: "Chapter ${verse.chapterNumber}",
+                            sanskrit      = verse.sanskritText,
+                            translationEn = verse.translation,
+                            translationHi = verse.translationHi,
+                            language      = prefs.language.name,
+                            isBookmarked  = verse.isBookmarked,
+                            updateDay     = today
+                        )
+                        return@launch
+                    }
+                }
+            }
+
             val verse = repository.getRandomVerse() ?: return@launch
+            val chapter = repository.observeChapter(verse.chapterNumber).first()
+            
+            // Save to preferences so Home Screen and Widget stay in sync
+            preferencesManager.setVerseOfTheDay(verse.id, today)
+            
             VerseOfDayWidgetUpdater.update(
                 context       = this@GitaApplication,
-                verseRef      = "${verse.chapterNumber}.${verse.verseNumber}",
+                verseRef      = verse.id,
+                chapterName   = chapter?.nameTransliterated ?: "Chapter ${verse.chapterNumber}",
                 sanskrit      = verse.sanskritText,
                 translationEn = verse.translation,
                 translationHi = verse.translationHi,
-                language      = prefs.language.name
+                language      = prefs.language.name,
+                isBookmarked  = verse.isBookmarked,
+                updateDay     = today
             )
+        }
+    }
+
+    fun toggleWidgetBookmark() {
+        appScope.launch {
+            val manager = GlanceAppWidgetManager(this@GitaApplication)
+            val ids = manager.getGlanceIds(VerseOfDayWidget::class.java)
+            if (ids.isEmpty()) return@launch
+            
+            val state = getAppWidgetState(
+                this@GitaApplication,
+                PreferencesGlanceStateDefinition,
+                ids.first()
+            )
+            val verseRef = state[VerseOfDayWidget.KEY_VERSE_REF] ?: return@launch
+            
+            repository.toggleBookmark(verseRef)
+            val verse = repository.observeVerse(verseRef).first()
+            
+            if (verse != null) {
+                ids.forEach { id ->
+                    updateAppWidgetState(
+                        this@GitaApplication,
+                        PreferencesGlanceStateDefinition,
+                        id
+                    ) { prefs ->
+                        prefs.toMutablePreferences().apply {
+                            this[VerseOfDayWidget.KEY_IS_BOOKMARKED] = verse.isBookmarked
+                        }
+                    }
+                }
+                VerseOfDayWidget().updateAll(this@GitaApplication)
+            }
         }
     }
 }

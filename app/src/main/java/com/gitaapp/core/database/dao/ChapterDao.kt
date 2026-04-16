@@ -31,6 +31,9 @@ interface ChapterDao {
     """)
     fun observeChapter(chapterNumber: Int): Flow<ChapterWithProgress?>
 
+    @Query("SELECT * FROM chapters WHERE chapter_number = :chapterNumber")
+    suspend fun getChapter(chapterNumber: Int): ChapterEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(chapters: List<ChapterEntity>)
 
