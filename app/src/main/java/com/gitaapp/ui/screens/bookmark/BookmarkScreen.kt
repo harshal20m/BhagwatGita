@@ -23,8 +23,6 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DismissDirection
-import androidx.compose.material3.DismissValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,104 +61,66 @@ fun BookmarkScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Bookmarks",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                title = { Text("Bookmarks", style = MaterialTheme.typography.titleLarge) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
     ) { innerPadding ->
         when (val state = uiState) {
-            is BookmarkUiState.Loading -> Unit // Brief — DB is fast
+            is BookmarkUiState.Loading -> Unit
 
-            is BookmarkUiState.Empty -> {
+            is BookmarkUiState.Empty ->
                 EmptyState(
-                    icon = "🔖",
-                    title = "No bookmarks yet",
+                    icon = "🔖", title = "No bookmarks yet",
                     subtitle = "Tap the bookmark icon on any verse to save it here for quick access.",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
+                    modifier = Modifier.fillMaxSize().padding(innerPadding)
                 )
-            }
 
-            is BookmarkUiState.Success -> {
+            is BookmarkUiState.Success ->
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 120.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(
-                        items = state.bookmarks,
-                        key = { bookmark -> bookmark.verseId }
-                    ) { bookmark ->
+                    items(items = state.bookmarks, key = { it.verseId }) { bookmark ->
                         SwipeToDeleteBookmark(
                             bookmark = bookmark,
-                            onClick = { onVerseClick(bookmark.chapterNumber, bookmark.verseNumber) },
+                            onClick  = { onVerseClick(bookmark.chapterNumber, bookmark.verseNumber) },
                             onDelete = { viewModel.removeBookmark(bookmark.verseId) }
                         )
                     }
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
-            }
         }
     }
 }
 
-// ── Swipe-to-delete wrapper ───────────────────────────────────────────────────
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SwipeToDeleteBookmark(
-    bookmark: Bookmark,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
-    val dismissState = rememberSwipeToDismissBoxState(
+private fun SwipeToDeleteBookmark(bookmark: Bookmark, onClick: () -> Unit, onDelete: () -> Unit) {
+    val state = rememberSwipeToDismissBoxState(
         confirmValueChange = { it == SwipeToDismissBoxValue.EndToStart }
     )
-
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
-            onDelete()
-        }
+    LaunchedEffect(state.currentValue) {
+        if (state.currentValue == SwipeToDismissBoxValue.EndToStart) onDelete()
     }
-
     SwipeToDismissBox(
-        state = dismissState,
+        state = state,
         backgroundContent = {
             val color by animateColorAsState(
-                targetValue = when (dismissState.dismissDirection) {
-                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                    else -> MaterialTheme.colorScheme.surfaceVariant
-                },
+                targetValue = if (state.dismissDirection == SwipeToDismissBoxValue.EndToStart)
+                    MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant,
                 label = "swipeBg"
             )
-            val scale by animateFloatAsState(
-                targetValue = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) 1f else 0.75f,
-                label = "swipeIconScale"
+            val sc by animateFloatAsState(
+                targetValue = if (state.dismissDirection == SwipeToDismissBoxValue.EndToStart) 1f else 0.75f,
+                label = "swipeScale"
             )
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(color)
-                    .padding(end = 20.dp),
+                Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)).background(color).padding(end = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete bookmark",
-                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.scale(scale)
-                )
+                Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.scale(sc))
             }
         },
         enableDismissFromStartToEnd = false,
@@ -170,71 +130,35 @@ private fun SwipeToDeleteBookmark(
     }
 }
 
-// ── Bookmark Card ─────────────────────────────────────────────────────────────
-
 @Composable
-private fun BookmarkCard(
-    bookmark: Bookmark,
-    onClick: () -> Unit
-) {
+private fun BookmarkCard(bookmark: Bookmark, onClick: () -> Unit) {
     Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            0.5.dp,
-            MaterialTheme.colorScheme.outlineVariant
-        )
+        onClick   = onClick,
+        modifier  = Modifier.fillMaxWidth(),
+        shape     = RoundedCornerShape(16.dp),
+        colors    = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(0.dp),
+        border    = androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Bookmark,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "${bookmark.chapterName} · ${bookmark.chapterNumber}.${bookmark.verseNumber}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = formatDate(bookmark.bookmarkedAt),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+        Column(Modifier.padding(16.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Bookmark, null, tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("${bookmark.chapterName} · ${bookmark.chapterNumber}.${bookmark.verseNumber}",
+                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f))
+                Text(formatDate(bookmark.bookmarkedAt), style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = bookmark.sanskritText,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = bookmark.translation,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+            Spacer(Modifier.height(8.dp))
+            Text(bookmark.sanskritText, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(6.dp))
+            Text(bookmark.translation, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
 
-private fun formatDate(timestamp: Long): String {
-    val sdf = SimpleDateFormat("MMM d", Locale.getDefault())
-    return sdf.format(Date(timestamp))
-}
+private fun formatDate(ts: Long): String = SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(ts))

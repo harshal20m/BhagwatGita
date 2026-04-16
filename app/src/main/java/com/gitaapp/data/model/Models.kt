@@ -2,10 +2,6 @@ package com.gitaapp.data.model
 
 import androidx.compose.runtime.Immutable
 
-/**
- * Domain model representing a single chapter of the Bhagavad Gita.
- * All properties are immutable for Compose stability.
- */
 @Immutable
 data class Chapter(
     val number: Int,
@@ -18,12 +14,9 @@ data class Chapter(
     val isStarted: Boolean = false
 )
 
-/**
- * Domain model representing a single verse (shloka) of the Bhagavad Gita.
- */
 @Immutable
 data class Verse(
-    val id: String,           // e.g. "1.1"
+    val id: String,
     val chapterNumber: Int,
     val verseNumber: Int,
     val sanskritText: String,
@@ -34,9 +27,6 @@ data class Verse(
     val isBookmarked: Boolean = false
 )
 
-/**
- * Domain model for a bookmarked verse with chapter context.
- */
 @Immutable
 data class Bookmark(
     val verseId: String,
@@ -48,9 +38,6 @@ data class Bookmark(
     val bookmarkedAt: Long
 )
 
-/**
- * Represents a user's reading progress for a chapter.
- */
 @Immutable
 data class ReadingProgress(
     val chapterNumber: Int,
@@ -63,9 +50,6 @@ data class ReadingProgress(
                 else (lastReadVerseNumber.toFloat() / totalVerses.toFloat()).coerceIn(0f, 1f)
 }
 
-/**
- * Search result domain model.
- */
 @Immutable
 data class SearchResult(
     val verseId: String,
@@ -76,16 +60,20 @@ data class SearchResult(
     val matchHighlight: String
 )
 
-/**
- * User preferences for reading experience.
- */
 @Immutable
 data class ReadingPreferences(
     val fontSize: FontSize = FontSize.MEDIUM,
     val showTransliteration: Boolean = true,
     val showWordMeanings: Boolean = true,
     val showCommentary: Boolean = true,
-    val themeMode: ThemeMode = ThemeMode.SYSTEM
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val language: AppLanguage = AppLanguage.ENGLISH,
+    val focusModeEnabled: Boolean = false,
+    val dailyReminderEnabled: Boolean = false,
+    val reminderHour: Int = 7,
+    val reminderMinute: Int = 0,
+    val autoNextEnabled: Boolean = false,
+    val autoNextIntervalSeconds: Int = 15
 )
 
 enum class FontSize(val scale: Float, val label: String) {
@@ -95,6 +83,144 @@ enum class FontSize(val scale: Float, val label: String) {
     EXTRA_LARGE(1.4f, "Extra Large")
 }
 
-enum class ThemeMode {
-    LIGHT, DARK, SYSTEM
+enum class ThemeMode(val labelEn: String, val labelHi: String) {
+    LIGHT("Light", "प्रकाश"),
+    DARK("Dark", "अंधकार"),
+    SYSTEM("System", "स्वचालित")
+}
+
+/**
+ * Spiritual / bhakti-named themes.
+ * Each maps to a Material3 seed color used in Theme.kt.
+ */
+enum class AppTheme(val labelEn: String, val labelHi: String, val seedColorHex: String) {
+    SAFFRON("Saffron · Agni", "भगवा · अग्नि", "#B45309"),
+    LOTUS("Lotus · Bhakti", "कमल · भक्ति", "#BE185D"),
+    KRISHNA("Krishna · Neela", "कृष्ण · नीला", "#1D4ED8"),
+    TULSI("Tulsi · Prakriti", "तुलसी · प्रकृति", "#15803D"),
+    SAFFRON_DARK("Ganga · Shanti", "गंगा · शांति", "#0E7490"),
+    RUDRA("Rudra · Shakti", "रुद्र · शक्ति", "#9333EA")
+}
+
+enum class AppLanguage(val displayName: String, val code: String) {
+    ENGLISH("English", "en"),
+    HINDI("हिन्दी", "hi")
+}
+
+// ── User profile ──────────────────────────────────────────────────────────────
+
+@Immutable
+data class UserProfile(
+    val name: String = "",
+    val dobDay: Int = 1,
+    val dobMonth: Int = 1,
+    val dobYear: Int = 2000,
+    val isSetup: Boolean = false
+) {
+    val age: Int
+        get() {
+            val today = java.util.Calendar.getInstance()
+            val birth = java.util.Calendar.getInstance().apply { set(dobYear, dobMonth - 1, dobDay) }
+            var a = today.get(java.util.Calendar.YEAR) - birth.get(java.util.Calendar.YEAR)
+            if (today.get(java.util.Calendar.DAY_OF_YEAR) < birth.get(java.util.Calendar.DAY_OF_YEAR)) a--
+            return maxOf(0, a)
+        }
+
+    val vedicRashi: RashiInfo  get() = RashiInfo.fromDob(dobDay, dobMonth)
+    val namRashi: RashiInfo    get() = RashiInfo.fromNameInitial(name.trim().uppercase().firstOrNull() ?: 'A')
+}
+
+// ── Rashi (full Vedic + naam rashi) ──────────────────────────────────────────
+
+@Immutable
+data class RashiInfo(
+    val nameEnglish: String,
+    val nameSanskrit: String,
+    val symbol: String,
+    val element: String,
+    val rulingPlanet: String,
+    val quality: String,         // Cardinal / Fixed / Mutable
+    val luckyNumber: String,
+    val luckyColor: String,
+    val descriptionEn: String,
+    val descriptionHi: String
+) {
+    companion object {
+        val ALL: List<RashiInfo> = listOf(
+            RashiInfo("Aries",      "मेष",     "♈","Fire", "Mars",    "Cardinal","1, 8","Red",
+                "Bold, energetic and pioneering. Natural leaders with fiery determination.",
+                "साहसी, ऊर्जावान और अग्रणी। जन्मजात नेता, दृढ़ निश्चयी।"),
+            RashiInfo("Taurus",     "वृषभ",    "♉","Earth","Venus",   "Fixed",   "2, 6","Green",
+                "Dependable, patient and sensual. Deeply connected to beauty and material comfort.",
+                "विश्वसनीय, धैर्यवान और संवेदनशील। सौंदर्य और भौतिक सुख से गहरा नाता।"),
+            RashiInfo("Gemini",     "मिथुन",   "♊","Air",  "Mercury", "Mutable", "3, 7","Yellow",
+                "Curious, adaptable and communicative. Quick-witted with love for variety.",
+                "जिज्ञासु, अनुकूलनशील और संचारशील। तीव्र बुद्धि, विविधता का प्रेम।"),
+            RashiInfo("Cancer",     "कर्क",    "♋","Water","Moon",    "Cardinal","2, 7","Silver",
+                "Intuitive, nurturing and protective. Deeply emotional with strong family bonds.",
+                "सहजज्ञानी, पोषण करने वाला। गहरी भावनाएं और पारिवारिक बंधन।"),
+            RashiInfo("Leo",        "सिंह",    "♌","Fire", "Sun",     "Fixed",   "1, 4","Gold",
+                "Confident, generous and creative. Natural performers who inspire others.",
+                "आत्मविश्वासी, उदार और रचनात्मक। जन्मजात कलाकार, प्रेरक।"),
+            RashiInfo("Virgo",      "कन्या",   "♍","Earth","Mercury", "Mutable", "3, 6","Navy",
+                "Analytical, practical and diligent. Detail-oriented perfectionists.",
+                "विश्लेषणात्मक, व्यावहारिक और परिश्रमी। विस्तार पर ध्यान देने वाले।"),
+            RashiInfo("Libra",      "तुला",    "♎","Air",  "Venus",   "Cardinal","6, 9","Pink",
+                "Diplomatic, gracious and fair-minded. Seek harmony and balance.",
+                "कूटनीतिज्ञ, विनम्र और निष्पक्ष। सद्भाव और संतुलन के साधक।"),
+            RashiInfo("Scorpio",    "वृश्चिक", "♏","Water","Mars",    "Fixed",   "1, 9","Maroon",
+                "Passionate, resourceful and brave. Intensely focused with deep perception.",
+                "भावुक, साधनसंपन्न और साहसी। गहरी अंतर्दृष्टि से युक्त।"),
+            RashiInfo("Sagittarius","धनु",     "♐","Fire", "Jupiter", "Mutable", "5, 9","Purple",
+                "Optimistic, adventurous and philosophical. Eternal seekers of truth.",
+                "आशावादी, साहसी और दार्शनिक। सत्य के शाश्वत साधक।"),
+            RashiInfo("Capricorn",  "मकर",     "♑","Earth","Saturn",  "Cardinal","6, 9","Brown",
+                "Disciplined, responsible and ambitious. Patient builders of lasting foundations.",
+                "अनुशासित, जिम्मेदार और महत्त्वाकांक्षी। धैर्य से स्थायी नींव बनाने वाले।"),
+            RashiInfo("Aquarius",   "कुम्भ",   "♒","Air",  "Saturn",  "Fixed",   "4, 8","Blue",
+                "Progressive, original and humanitarian. Visionaries ahead of their time.",
+                "प्रगतिशील, मौलिक और मानवतावादी। अपने समय से आगे के स्वप्नदृष्टा।"),
+            RashiInfo("Pisces",     "मीन",     "♓","Water","Jupiter", "Mutable", "3, 7","Sea Green",
+                "Compassionate, artistic and wise. Deeply intuitive and spiritually inclined.",
+                "करुणामय, कलात्मक और बुद्धिमान। गहरे अंतर्ज्ञान और आध्यात्मिक झुकाव वाले।")
+        )
+
+        // Vedic rashi from date of birth (sun-sign style month/day boundaries)
+        fun fromDob(day: Int, month: Int): RashiInfo {
+            val idx = when (month) {
+                1  -> if (day >= 20) 9  else 8   // Jan20+ Aquarius, else Capricorn
+                2  -> if (day >= 19) 10 else 9   // Feb19+ Pisces
+                3  -> if (day >= 21) 0  else 10  // Mar21+ Aries
+                4  -> if (day >= 20) 1  else 0
+                5  -> if (day >= 21) 2  else 1
+                6  -> if (day >= 21) 3  else 2
+                7  -> if (day >= 23) 4  else 3
+                8  -> if (day >= 23) 5  else 4
+                9  -> if (day >= 23) 6  else 5
+                10 -> if (day >= 23) 7  else 6
+                11 -> if (day >= 22) 8  else 7
+                12 -> if (day >= 22) 9  else 8
+                else -> 0
+            }
+            return ALL[idx]
+        }
+
+        // Naam rashi from first letter of name (traditional akshar map)
+        private val LETTER_MAP: Map<Char, Int> = buildMap {
+            for (c in "AEI")   put(c, 0)   // Aries
+            for (c in "BVUW")  put(c, 1)   // Taurus
+            for (c in "KCG")   put(c, 2)   // Gemini
+            for (c in "DH")    put(c, 3)   // Cancer
+            for (c in "ML")    put(c, 4)   // Leo
+            for (c in "PFTO")  put(c, 5)   // Virgo
+            for (c in "R")     put(c, 6)   // Libra
+            for (c in "NYS")   put(c, 7)   // Scorpio
+            for (c in "BFX")   put(c, 8)   // Sagittarius
+            for (c in "JQ")    put(c, 9)   // Capricorn
+            for (c in "GSZ")   put(c, 10)  // Aquarius
+            for (c in "CTH")   put(c, 11)  // Pisces
+        }
+
+        fun fromNameInitial(c: Char): RashiInfo = ALL[LETTER_MAP[c] ?: 0]
+    }
 }

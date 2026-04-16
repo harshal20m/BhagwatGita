@@ -5,65 +5,45 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Transaction
 import com.gitaapp.core.database.entity.ChapterEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ChapterDao {
 
-    /**
-     * Observe all chapters — emits on every DB change.
-     * UI collects this via collectAsStateWithLifecycle().
-     */
     @Query("""
-        SELECT c.*, 
-               COALESCE(rp.last_read_verse_number, 0) AS lastReadVerse
+        SELECT c.chapter_number, c.name_transliterated, c.name_sanskrit,
+               c.name_meaning, c.summary, c.verse_count,
+               COALESCE(rp.last_read_verse_number, 0) AS last_read_verse
         FROM chapters c
         LEFT JOIN reading_progress rp ON c.chapter_number = rp.chapter_number
         ORDER BY c.chapter_number ASC
     """)
     fun observeAllChapters(): Flow<List<ChapterWithProgress>>
 
-    /**
-     * Observe a single chapter by number.
-     */
     @Query("""
-        SELECT c.*, 
-               COALESCE(rp.last_read_verse_number, 0) AS lastReadVerse
+        SELECT c.chapter_number, c.name_transliterated, c.name_sanskrit,
+               c.name_meaning, c.summary, c.verse_count,
+               COALESCE(rp.last_read_verse_number, 0) AS last_read_verse
         FROM chapters c
         LEFT JOIN reading_progress rp ON c.chapter_number = rp.chapter_number
         WHERE c.chapter_number = :chapterNumber
     """)
     fun observeChapter(chapterNumber: Int): Flow<ChapterWithProgress?>
 
-    /**
-     * Insert or replace all chapters — used during database seeding.
-     */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(chapters: List<ChapterEntity>)
 
-    /**
-     * Check if chapters are already seeded to avoid re-seeding.
-     */
     @Query("SELECT COUNT(*) FROM chapters")
     suspend fun getChapterCount(): Int
 }
 
-/**
- * POJO for the JOIN result — not an Entity itself.
- */
 data class ChapterWithProgress(
-    @ColumnInfo(name = "chapter_number")
-    val chapterNumber: Int,
-    @ColumnInfo(name = "name_transliterated")
-    val nameTransliterated: String,
-    @ColumnInfo(name = "name_sanskrit")
-    val nameSanskrit: String,
-    @ColumnInfo(name = "name_meaning")
-    val nameMeaning: String,
-    val summary: String,
-    @ColumnInfo(name = "verse_count")
-    val verseCount: Int,
-    val lastReadVerse: Int
+    @ColumnInfo(name = "chapter_number")      val chapterNumber: Int,
+    @ColumnInfo(name = "name_transliterated") val nameTransliterated: String,
+    @ColumnInfo(name = "name_sanskrit")       val nameSanskrit: String,
+    @ColumnInfo(name = "name_meaning")        val nameMeaning: String,
+    @ColumnInfo(name = "summary")             val summary: String,
+    @ColumnInfo(name = "verse_count")         val verseCount: Int,
+    @ColumnInfo(name = "last_read_verse")     val lastReadVerse: Int
 )

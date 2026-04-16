@@ -3,23 +3,29 @@
     <string name="app_name">Bhagavad Gita</string>
     <string name="app_name_sanskrit">श्रीमद्भगवद्गीता</string>
 
-    <!-- Navigation labels -->
+    <!-- Navigation -->
     <string name="nav_home">Home</string>
     <string name="nav_bookmarks">Bookmarks</string>
     <string name="nav_search">Search</string>
+    <string name="nav_profile">Profile</string>
 
-    <!-- Home screen -->
+    <!-- Home -->
     <string name="home_continue_reading">Continue Reading</string>
     <string name="home_verse_of_the_day">Verse of the Day</string>
     <string name="home_all_chapters">18 Chapters</string>
     <string name="home_refresh_verse">Refresh verse</string>
     <string name="home_overall_progress">Overall Progress</string>
+    <string name="home_navigate_chapters">Navigate Chapters</string>
+    <string name="home_chapters_header">All Chapters</string>
 
-    <!-- Chapter screen -->
+    <!-- Chapter -->
     <string name="chapter_verses_count">%1$d verses</string>
     <string name="chapter_progress">Progress</string>
+    <string name="chapter_read_only_mode">Read-only — tap any verse to open it</string>
+    <string name="chapter_show_explanations">Show explanations</string>
+    <string name="chapter_read_only">Read-only mode</string>
 
-    <!-- Verse screen -->
+    <!-- Verse -->
     <string name="verse_label">Verse %1$s</string>
     <string name="section_sanskrit">Sanskrit</string>
     <string name="section_transliteration">Transliteration</string>
@@ -28,31 +34,77 @@
     <string name="section_commentary">Commentary (हिन्दी)</string>
     <string name="verse_prev">Previous verse</string>
     <string name="verse_next">Next verse</string>
-    <string name="verse_count_of">%1$d / %2$d</string>
+    <string name="focus_mode">Focus Mode</string>
 
-    <!-- Bookmark screen -->
+    <!-- Bookmark -->
     <string name="bookmark_empty_title">No bookmarks yet</string>
-    <string name="bookmark_empty_subtitle">Tap the bookmark icon on any verse to save it here for quick access.</string>
+    <string name="bookmark_empty_subtitle">Tap the bookmark icon on any verse to save it here.</string>
     <string name="bookmark_remove">Remove bookmark</string>
     <string name="bookmark_add">Add bookmark</string>
 
-    <!-- Search screen -->
-    <string name="search_hint">Search verses, translations, meanings…</string>
-    <string name="search_clear">Clear search</string>
+    <!-- Search -->
+    <string name="search_hint">Search 701 verses…</string>
+    <string name="search_clear">Clear</string>
     <string name="search_idle_title">Search the Gita</string>
     <string name="search_idle_subtitle">Enter a keyword to search across all 701 verses</string>
     <string name="search_empty_title">No results found</string>
-    <string name="search_empty_subtitle">Try different keywords — search works across translations, transliterations, and word meanings.</string>
-    <string name="search_results_count">%1$d results</string>
-    <string name="search_result_count_single">1 result</string>
+    <string name="search_history_clear">Clear history</string>
+    <string name="search_recent">Recent searches</string>
 
-    <!-- Content descriptions -->
-    <string name="cd_chapter_number">Chapter number</string>
-    <string name="cd_navigate_up">Navigate up</string>
-    <string name="cd_navigate_back">Go back</string>
-    <string name="cd_bookmark_filled">Remove bookmark</string>
-    <string name="cd_bookmark_outline">Add bookmark</string>
-    <string name="cd_delete_bookmark">Delete bookmark</string>
-    <string name="cd_continue_reading">Continue reading chapter %1$d verse %2$d</string>
-    <string name="cd_verse_of_the_day">Verse of the day — tap to read</string>
+    <!-- Profile & Settings -->
+    <string name="profile_title">Profile &amp; Settings</string>
+    <string name="profile_edit">Edit profile</string>
+    <string name="profile_setup_name">Your name</string>
+    <string name="profile_setup_dob">Date of Birth</string>
+    <string name="profile_dob_day">Day</string>
+    <string name="profile_dob_month">Mon</string>
+    <string name="profile_dob_year">Year</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_cancel">Cancel</string>
+    <string name="profile_rashi_preview">Your Rashi: %1$s (%2$s)</string>
+    <string name="profile_set_up_prompt">Tap edit to add your name and date of birth</string>
+
+    <!-- Rashi -->
+    <string name="rashi_vedic">Vedic Rashi (from date of birth)</string>
+    <string name="rashi_naam">Naam Rashi (from name)</string>
+    <string name="rashi_element">Element</string>
+    <string name="rashi_planet">Ruling Planet</string>
+    <string name="rashi_quality">Quality</string>
+    <string name="rashi_lucky_number">Lucky Number</string>
+    <string name="rashi_lucky_color">Lucky Color</string>
+
+    <!-- Settings sections -->
+    <string name="settings_reading">Reading</string>
+    <string name="settings_experience">Experience</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_font_size">Font Size</string>
+    <string name="settings_transliteration">Show Transliteration</string>
+    <string name="settings_word_meanings">Show Word Meanings</string>
+    <string name="settings_commentary">Show Commentary (Hindi)</string>
+    <string name="settings_focus_mode">Focus Mode</string>
+    <string name="settings_focus_subtitle">Hides transliteration &amp; word meanings for distraction-free reading</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_app_theme">App Theme</string>
+    <string name="settings_daily_reminder">Daily Gita Reminder</string>
+    <string name="settings_reminder_subtitle">Get a reminder to read the Gita every day</string>
+    <string name="settings_reminder_time">Reminder Time</string>
+    <string name="settings_auto_next">Auto-Next Verse</string>
+    <string name="settings_auto_next_subtitle">Automatically advance to the next verse</string>
+    <string name="settings_auto_next_interval">Interval: %1$d seconds</string>
+
+    <!-- App info -->
+    <string name="app_info_verses">701 verses · 18 chapters · Fully offline</string>
+    <string name="app_version">Version 1.0.0</string>
+
+    <!-- Notification -->
+    <string name="notification_channel_name">Daily Gita Reminder</string>
+    <string name="notification_channel_desc">Daily verse reminder from the Bhagavad Gita</string>
+    <string name="notification_title">🕉 Verse of the Day — %1$s</string>
+    <string name="notification_tap">Bhagavad Gita · Tap to read</string>
+
+    <!-- Widget -->
+    <string name="widget_description">Shows the Verse of the Day from the Bhagavad Gita</string>
+    <string name="widget_tap_hint">Tap to read →</string>
+    <string name="widget_header">Verse of the Day</string>
 </resources>

@@ -1,53 +1,31 @@
 package com.gitaapp.ui.screens.verse
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.NavigateBefore
-import androidx.compose.material.icons.automirrored.filled.NavigateNext
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gitaapp.data.model.AppLanguage
 import com.gitaapp.data.model.ReadingPreferences
-import com.gitaapp.data.model.Verse
 import com.gitaapp.ui.components.BookmarkIconButton
 import com.gitaapp.ui.components.EmptyState
-import com.gitaapp.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,54 +35,52 @@ fun VerseScreen(
     onNavigateToVerse: (Int, Int) -> Unit,
     viewModel: VerseViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState   by viewModel.uiState.collectAsStateWithLifecycle()
+    val countdown by viewModel.autoNextCountdown.collectAsStateWithLifecycle()
+
+    // Wire auto-next navigation events
+    LaunchedEffect(Unit) {
+        viewModel.navigateToVerse.collect { (c, v) -> onNavigateToVerse(c, v) }
+    }
 
     Scaffold(
         topBar = {
             VerseTopBar(
                 title = when (val s = uiState) {
-                    is VerseUiState.Success ->
-                        "${s.chapterName} · ${s.verse.chapterNumber}.${s.verse.verseNumber}"
+                    is VerseUiState.Success -> "${s.chapterName} · ${s.verse.chapterNumber}.${s.verse.verseNumber}"
                     else -> "Verse"
                 },
-                isBookmarked = (uiState as? VerseUiState.Success)?.verse?.isBookmarked ?: false,
-                onNavigateUp = onNavigateUp,
-                onBookmarkClick = { viewModel.toggleBookmark() }
+                isBookmarked    = (uiState as? VerseUiState.Success)?.verse?.isBookmarked ?: false,
+                isFocusMode     = (uiState as? VerseUiState.Success)?.preferences?.focusModeEnabled ?: false,
+                onNavigateUp    = onNavigateUp,
+                onBookmarkClick = { viewModel.toggleBookmark() },
+                onToggleFocus   = { viewModel.toggleFocusMode() }
             )
         }
     ) { innerPadding ->
         when (val state = uiState) {
-            is VerseUiState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
-                    contentAlignment = Alignment.Center
-                ) {
+            is VerseUiState.Loading ->
+                Box(Modifier.fillMaxSize().padding(innerPadding), Alignment.Center) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
-            }
-
-            is VerseUiState.Error -> {
-                EmptyState(
-                    icon = "🕉",
-                    title = "Could not load verse",
-                    subtitle = state.message,
-                    modifier = Modifier.fillMaxSize().padding(innerPadding)
-                )
-            }
-
-            is VerseUiState.Success -> {
+            is VerseUiState.Error ->
+                EmptyState("🕉", "Could not load verse", state.message,
+                    Modifier.fillMaxSize().padding(innerPadding))
+            is VerseUiState.Success ->
                 VerseContent(
-                    state = state,
-                    contentPadding = innerPadding,
-                    onPreviousVerse = {
+                    state            = state,
+                    topPadding       = innerPadding.calculateTopPadding(),
+                    countdown        = countdown,
+                    onPreviousVerse  = {
+                        viewModel.resetAutoNext()
                         onNavigateToVerse(state.verse.chapterNumber, state.verse.verseNumber - 1)
                     },
-                    onNextVerse = {
+                    onNextVerse      = {
+                        viewModel.resetAutoNext()
                         onNavigateToVerse(state.verse.chapterNumber, state.verse.verseNumber + 1)
                     },
                     onNavigateToChapter = { onNavigateToChapter(state.verse.chapterNumber) }
                 )
-            }
         }
     }
 }
@@ -112,270 +88,218 @@ fun VerseScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun VerseTopBar(
-    title: String,
-    isBookmarked: Boolean,
-    onNavigateUp: () -> Unit,
-    onBookmarkClick: () -> Unit
+    title: String, isBookmarked: Boolean, isFocusMode: Boolean,
+    onNavigateUp: () -> Unit, onBookmarkClick: () -> Unit, onToggleFocus: () -> Unit
 ) {
     TopAppBar(
-        title = {
-            Text(
-                text = title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleSmall
-            )
-        },
-        navigationIcon = {
-            IconButton(onClick = onNavigateUp) {
+        title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.titleSmall) },
+        navigationIcon = { IconButton(onClick = onNavigateUp) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+        actions = {
+            IconButton(onClick = onToggleFocus) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Navigate up"
+                    if (isFocusMode) Icons.Filled.CenterFocusStrong else Icons.Outlined.CenterFocusWeak,
+                    "Focus mode",
+                    tint = if (isFocusMode) MaterialTheme.colorScheme.primary
+                           else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            BookmarkIconButton(isBookmarked = isBookmarked, onClick = onBookmarkClick)
         },
-        actions = {
-            BookmarkIconButton(
-                isBookmarked = isBookmarked,
-                onClick = onBookmarkClick
-            )
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background
-        )
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
     )
 }
 
 @Composable
 private fun VerseContent(
     state: VerseUiState.Success,
-    contentPadding: PaddingValues,
+    topPadding: androidx.compose.ui.unit.Dp,
+    countdown: Int?,
     onPreviousVerse: () -> Unit,
     onNextVerse: () -> Unit,
     onNavigateToChapter: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(contentPadding)
-            .verticalScroll(rememberScrollState())
-    ) {
+    val prefs   = state.preferences
+    val verse   = state.verse
+    val isHindi = prefs.language == AppLanguage.HINDI
+    val scale   = prefs.fontSize.scale
+
+    Box(Modifier.fillMaxSize()) {
+        // ── Scrollable content ───────────────────────────────────────────
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
-        ) {
-            // ── Verse number ──────────────────────────────────────────────
-            Text(
-                text = "Verse ${state.verse.chapterNumber}.${state.verse.verseNumber}",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // ── Sanskrit Shloka ───────────────────────────────────────────
-            SanskritSection(text = state.verse.sanskritText)
-
-            Spacer(modifier = Modifier.height(20.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // ── Transliteration ───────────────────────────────────────────
-            if (state.preferences.showTransliteration) {
-                TransliterationSection(text = state.verse.transliteration)
-                Spacer(modifier = Modifier.height(20.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-
-            // ── English Translation ───────────────────────────────────────
-            TranslationSection(text = state.verse.translation)
-
-            Spacer(modifier = Modifier.height(20.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // ── Word Meanings ─────────────────────────────────────────────
-            if (state.preferences.showWordMeanings) {
-                WordMeaningsSection(text = state.verse.wordMeanings)
-                Spacer(modifier = Modifier.height(20.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-
-            // ── Hindi Commentary ──────────────────────────────────────────
-            if (state.preferences.showCommentary) {
-                CommentarySection(text = state.verse.commentary)
-                Spacer(modifier = Modifier.height(20.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-
-            // ── Navigation buttons ────────────────────────────────────────
-            VerseNavigationRow(
-                verseNumber = state.verse.verseNumber,
-                totalVerses = state.totalVersesInChapter,
-                chapterNumber = state.verse.chapterNumber,
-                onPreviousVerse = onPreviousVerse,
-                onNextVerse = onNextVerse,
-                onNavigateToChapter = onNavigateToChapter
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-        }
-    }
-}
-
-// ── Sanskrit Section ──────────────────────────────────────────────────────────
-
-@Composable
-private fun SanskritSection(text: String) {
-    Column {
-        SectionLabel(label = "Sanskrit")
-        Spacer(modifier = Modifier.height(8.dp))
-        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f))
-                .padding(16.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(top = topPadding)
+                .padding(bottom = 100.dp)   // clearance for floating nav bar
         ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
-            )
+            Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
+                // Verse pill
+                SurfacePill("${verse.chapterNumber}.${verse.verseNumber}")
+                Spacer(Modifier.height(16.dp))
+                // Sanskrit — always shown, full text no clip
+                SanskritBox(verse.sanskritText, scale)
+                // Transliteration
+                if (prefs.showTransliteration && !prefs.focusModeEnabled) {
+                    Divider16()
+                    SectionLabel(if (isHindi) "उच्चारण" else "TRANSLITERATION")
+                    Spacer(Modifier.height(6.dp))
+                    Text(verse.transliteration,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontStyle = FontStyle.Italic, fontSize = (14 * scale).sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                // Translation
+                Divider16()
+                SectionLabel(if (isHindi) "अनुवाद" else "TRANSLATION")
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    if (isHindi) verse.commentary else verse.translation,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = (16 * scale).sp, lineHeight = (26 * scale).sp),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                // Word meanings (English only)
+                if (prefs.showWordMeanings && !prefs.focusModeEnabled && !isHindi) {
+                    Divider16()
+                    SectionLabel("WORD MEANINGS")
+                    Spacer(Modifier.height(6.dp))
+                    Text(verse.wordMeanings,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = (14 * scale).sp, lineHeight = (22 * scale).sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                // Commentary (English only)
+                if (prefs.showCommentary && !prefs.focusModeEnabled && !isHindi) {
+                    Divider16()
+                    SectionLabel("COMMENTARY (हिन्दी)")
+                    Spacer(Modifier.height(6.dp))
+                    Text(verse.commentary,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = (14 * scale).sp, lineHeight = (22 * scale).sp),
+                        color = MaterialTheme.colorScheme.onSurface)
+                }
+                Spacer(Modifier.height(24.dp))
+            }
+        }
+
+        // ── Floating fixed navigation bar ────────────────────────────────
+        FloatingVerseNav(
+            verseNumber  = verse.verseNumber,
+            totalVerses  = state.totalVersesInChapter,
+            chapterNumber = verse.chapterNumber,
+            countdown    = countdown,
+            onPrev       = onPreviousVerse,
+            onNext       = onNextVerse,
+            onChapter    = onNavigateToChapter,
+            modifier     = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+}
+
+// ── Floating verse navigation bar ────────────────────────────────────────────
+
+@Composable
+private fun FloatingVerseNav(
+    verseNumber: Int, totalVerses: Int, chapterNumber: Int,
+    countdown: Int?,
+    onPrev: () -> Unit, onNext: () -> Unit, onChapter: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .padding(horizontal = 20.dp, vertical = 20.dp)
+            .shadow(12.dp, RoundedCornerShape(28.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(0.1f))
+            .clip(RoundedCornerShape(28.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Prev
+            FilledTonalIconButton(
+                onClick  = onPrev,
+                enabled  = verseNumber > 1,
+                modifier = Modifier.size(42.dp)
+            ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, "Prev") }
+
+            // Chapter pill + verse counter
+            FilledTonalButton(
+                onClick = onChapter,
+                shape   = RoundedCornerShape(16.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Ch $chapterNumber", style = MaterialTheme.typography.labelMedium)
+                    Text("$verseNumber / $totalVerses",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        color = LocalContentColor.current.copy(alpha = 0.7f))
+                }
+            }
+
+            // Auto-next countdown ring (shown when enabled)
+            if (countdown != null) {
+                AutoNextRing(countdown = countdown, onTap = onNext)
+            }
+
+            // Next
+            FilledTonalIconButton(
+                onClick  = onNext,
+                enabled  = verseNumber < totalVerses,
+                modifier = Modifier.size(42.dp)
+            ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, "Next") }
         }
     }
 }
 
-// ── Transliteration Section ───────────────────────────────────────────────────
-
 @Composable
-private fun TransliterationSection(text: String) {
-    Column {
-        SectionLabel(label = "Transliteration")
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
-        )
-    }
-}
-
-// ── Translation Section ───────────────────────────────────────────────────────
-
-@Composable
-private fun TranslationSection(text: String) {
-    Column {
-        SectionLabel(label = "Translation")
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
-        )
-    }
-}
-
-// ── Word Meanings Section ─────────────────────────────────────────────────────
-
-@Composable
-private fun WordMeaningsSection(text: String) {
-    Column {
-        SectionLabel(label = "Word Meanings")
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
-        )
-    }
-}
-
-// ── Commentary Section ────────────────────────────────────────────────────────
-
-@Composable
-private fun CommentarySection(text: String) {
-    Column {
-        SectionLabel(label = "Commentary (हिन्दी)")
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
-        )
-    }
-}
-
-// ── Section Label ─────────────────────────────────────────────────────────────
-
-@Composable
-private fun SectionLabel(label: String) {
-    Text(
-        text = label.uppercase(),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.primary,
-        letterSpacing = MaterialTheme.typography.labelSmall.letterSpacing
-    )
-}
-
-// ── Verse Navigation Row ──────────────────────────────────────────────────────
-
-@Composable
-private fun VerseNavigationRow(
-    verseNumber: Int,
-    totalVerses: Int,
-    chapterNumber: Int,
-    onPreviousVerse: () -> Unit,
-    onNextVerse: () -> Unit,
-    onNavigateToChapter: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+private fun AutoNextRing(countdown: Int, onTap: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(42.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clickable { onTap() }
     ) {
         Text(
-            text = "$verseNumber / $totalVerses",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text  = countdown.toString(),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            FilledTonalIconButton(
-                onClick = onPreviousVerse,
-                enabled = verseNumber > 1
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.NavigateBefore,
-                    contentDescription = "Previous verse"
-                )
-            }
-
-            FilledTonalButton(onClick = onNavigateToChapter) {
-                Text(
-                    text = "Chapter $chapterNumber",
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-
-            FilledTonalIconButton(
-                onClick = onNextVerse,
-                enabled = verseNumber < totalVerses
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.NavigateNext,
-                    contentDescription = "Next verse"
-                )
-            }
-        }
     }
+}
+
+// ── Small helpers ─────────────────────────────────────────────────────────────
+
+@Composable private fun SurfacePill(text: String) {
+    Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+        Text(text, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+    }
+}
+
+@Composable private fun SanskritBox(text: String, scale: Float) {
+    Box(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f))
+            .padding(16.dp)
+    ) {
+        Text(text, style = MaterialTheme.typography.bodyLarge.copy(
+            fontSize = (17 * scale).sp, lineHeight = (28 * scale).sp),
+            color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+@Composable private fun Divider16() {
+    Spacer(Modifier.height(20.dp))
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    Spacer(Modifier.height(20.dp))
+}
+
+@Composable private fun SectionLabel(label: String) {
+    Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
 }

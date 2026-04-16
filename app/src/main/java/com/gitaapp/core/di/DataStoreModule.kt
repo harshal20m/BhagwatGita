@@ -2,14 +2,9 @@ package com.gitaapp.core.di
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
-import com.gitaapp.data.model.FontSize
-import com.gitaapp.data.model.ReadingPreferences
-import com.gitaapp.data.model.ThemeMode
+import com.gitaapp.data.model.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,55 +20,111 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 @Module
 @InstallIn(SingletonComponent::class)
 object DataStoreModule {
-
-    @Provides
-    @Singleton
-    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
-        context.dataStore
+    @Provides @Singleton
+    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> = context.dataStore
 }
 
-/**
- * Manages user reading preferences via DataStore.
- */
 @Singleton
-class PreferencesManager @Inject constructor(
-    private val dataStore: DataStore<Preferences>
-) {
+class PreferencesManager @Inject constructor(private val dataStore: DataStore<Preferences>) {
+
     private object Keys {
-        val FONT_SIZE = stringPreferencesKey("font_size")
-        val SHOW_TRANSLITERATION = booleanPreferencesKey("show_transliteration")
-        val SHOW_WORD_MEANINGS = booleanPreferencesKey("show_word_meanings")
-        val SHOW_COMMENTARY = booleanPreferencesKey("show_commentary")
-        val THEME_MODE = stringPreferencesKey("theme_mode")
+        val FONT_SIZE              = stringPreferencesKey("font_size")
+        val SHOW_TRANSLITERATION   = booleanPreferencesKey("show_transliteration")
+        val SHOW_WORD_MEANINGS     = booleanPreferencesKey("show_word_meanings")
+        val SHOW_COMMENTARY        = booleanPreferencesKey("show_commentary")
+        val THEME_MODE             = stringPreferencesKey("theme_mode")
+        val APP_THEME              = stringPreferencesKey("app_theme")
+        val LANGUAGE               = stringPreferencesKey("language")
+        val FOCUS_MODE             = booleanPreferencesKey("focus_mode")
+        val DAILY_REMINDER         = booleanPreferencesKey("daily_reminder")
+        val REMINDER_HOUR          = intPreferencesKey("reminder_hour")
+        val REMINDER_MINUTE        = intPreferencesKey("reminder_minute")
+        val AUTO_NEXT_ENABLED      = booleanPreferencesKey("auto_next_enabled")
+        val AUTO_NEXT_INTERVAL     = intPreferencesKey("auto_next_interval")
+        val SEARCH_HISTORY         = stringPreferencesKey("search_history")
+        val PROFILE_NAME           = stringPreferencesKey("profile_name")
+        val PROFILE_DOB_DAY        = intPreferencesKey("profile_dob_day")
+        val PROFILE_DOB_MONTH      = intPreferencesKey("profile_dob_month")
+        val PROFILE_DOB_YEAR       = intPreferencesKey("profile_dob_year")
+        val PROFILE_IS_SETUP       = booleanPreferencesKey("profile_is_setup")
     }
 
-    val readingPreferences: Flow<ReadingPreferences> = dataStore.data.map { prefs ->
+    val readingPreferences: Flow<ReadingPreferences> = dataStore.data.map { p ->
         ReadingPreferences(
-            fontSize = FontSize.valueOf(prefs[Keys.FONT_SIZE] ?: FontSize.MEDIUM.name),
-            showTransliteration = prefs[Keys.SHOW_TRANSLITERATION] ?: true,
-            showWordMeanings = prefs[Keys.SHOW_WORD_MEANINGS] ?: true,
-            showCommentary = prefs[Keys.SHOW_COMMENTARY] ?: true,
-            themeMode = ThemeMode.valueOf(prefs[Keys.THEME_MODE] ?: ThemeMode.SYSTEM.name)
+            fontSize             = safeEnum(p[Keys.FONT_SIZE], FontSize.MEDIUM),
+            showTransliteration  = p[Keys.SHOW_TRANSLITERATION] ?: true,
+            showWordMeanings     = p[Keys.SHOW_WORD_MEANINGS] ?: true,
+            showCommentary       = p[Keys.SHOW_COMMENTARY] ?: true,
+            themeMode            = safeEnum(p[Keys.THEME_MODE], ThemeMode.SYSTEM),
+            language             = safeEnum(p[Keys.LANGUAGE], AppLanguage.ENGLISH),
+            focusModeEnabled     = p[Keys.FOCUS_MODE] ?: false,
+            dailyReminderEnabled = p[Keys.DAILY_REMINDER] ?: false,
+            reminderHour         = p[Keys.REMINDER_HOUR] ?: 7,
+            reminderMinute       = p[Keys.REMINDER_MINUTE] ?: 0,
+            autoNextEnabled      = p[Keys.AUTO_NEXT_ENABLED] ?: false,
+            autoNextIntervalSeconds = p[Keys.AUTO_NEXT_INTERVAL] ?: 15
         )
     }
 
-    suspend fun setFontSize(fontSize: FontSize) {
-        dataStore.edit { it[Keys.FONT_SIZE] = fontSize.name }
+    val appTheme: Flow<AppTheme> = dataStore.data.map { p ->
+        safeEnum(p[Keys.APP_THEME], AppTheme.SAFFRON)
     }
 
-    suspend fun setShowTransliteration(show: Boolean) {
-        dataStore.edit { it[Keys.SHOW_TRANSLITERATION] = show }
+    val userProfile: Flow<UserProfile> = dataStore.data.map { p ->
+        UserProfile(
+            name     = p[Keys.PROFILE_NAME] ?: "",
+            dobDay   = p[Keys.PROFILE_DOB_DAY] ?: 1,
+            dobMonth = p[Keys.PROFILE_DOB_MONTH] ?: 1,
+            dobYear  = p[Keys.PROFILE_DOB_YEAR] ?: 2000,
+            isSetup  = p[Keys.PROFILE_IS_SETUP] ?: false
+        )
     }
 
-    suspend fun setShowWordMeanings(show: Boolean) {
-        dataStore.edit { it[Keys.SHOW_WORD_MEANINGS] = show }
+    val searchHistory: Flow<List<String>> = dataStore.data.map { p ->
+        (p[Keys.SEARCH_HISTORY] ?: "").split("|").filter { it.isNotBlank() }.take(10)
     }
 
-    suspend fun setShowCommentary(show: Boolean) {
-        dataStore.edit { it[Keys.SHOW_COMMENTARY] = show }
+    // ── Setters ───────────────────────────────────────────────────────────────
+    suspend fun setFontSize(v: FontSize)            { dataStore.edit { it[Keys.FONT_SIZE] = v.name } }
+    suspend fun setShowTransliteration(v: Boolean)  { dataStore.edit { it[Keys.SHOW_TRANSLITERATION] = v } }
+    suspend fun setShowWordMeanings(v: Boolean)      { dataStore.edit { it[Keys.SHOW_WORD_MEANINGS] = v } }
+    suspend fun setShowCommentary(v: Boolean)        { dataStore.edit { it[Keys.SHOW_COMMENTARY] = v } }
+    suspend fun setThemeMode(v: ThemeMode)           { dataStore.edit { it[Keys.THEME_MODE] = v.name } }
+    suspend fun setAppTheme(v: AppTheme)             { dataStore.edit { it[Keys.APP_THEME] = v.name } }
+    suspend fun setLanguage(v: AppLanguage)          { dataStore.edit { it[Keys.LANGUAGE] = v.name } }
+    suspend fun setFocusMode(v: Boolean)             { dataStore.edit { it[Keys.FOCUS_MODE] = v } }
+    suspend fun setDailyReminder(v: Boolean)         { dataStore.edit { it[Keys.DAILY_REMINDER] = v } }
+    suspend fun setReminderTime(h: Int, m: Int)      { dataStore.edit { it[Keys.REMINDER_HOUR] = h; it[Keys.REMINDER_MINUTE] = m } }
+    suspend fun setAutoNext(v: Boolean)              { dataStore.edit { it[Keys.AUTO_NEXT_ENABLED] = v } }
+    suspend fun setAutoNextInterval(seconds: Int)    { dataStore.edit { it[Keys.AUTO_NEXT_INTERVAL] = seconds } }
+
+    suspend fun saveProfile(name: String, day: Int, month: Int, year: Int) {
+        dataStore.edit {
+            it[Keys.PROFILE_NAME]      = name
+            it[Keys.PROFILE_DOB_DAY]   = day
+            it[Keys.PROFILE_DOB_MONTH] = month
+            it[Keys.PROFILE_DOB_YEAR]  = year
+            it[Keys.PROFILE_IS_SETUP]  = true
+        }
     }
 
-    suspend fun setThemeMode(mode: ThemeMode) {
-        dataStore.edit { it[Keys.THEME_MODE] = mode.name }
+    suspend fun addSearchHistory(query: String) {
+        if (query.isBlank() || query.length < 2) return
+        dataStore.edit { p ->
+            val prev = (p[Keys.SEARCH_HISTORY] ?: "").split("|").filter { it.isNotBlank() && it != query }
+            p[Keys.SEARCH_HISTORY] = (listOf(query) + prev).take(10).joinToString("|")
+        }
     }
+
+    suspend fun removeSearchHistory(query: String) {
+        dataStore.edit { p ->
+            val prev = (p[Keys.SEARCH_HISTORY] ?: "").split("|").filter { it.isNotBlank() }
+            p[Keys.SEARCH_HISTORY] = prev.filter { it != query }.joinToString("|")
+        }
+    }
+
+    suspend fun clearSearchHistory() { dataStore.edit { it[Keys.SEARCH_HISTORY] = "" } }
+
+    private inline fun <reified T : Enum<T>> safeEnum(name: String?, default: T): T =
+        name?.let { runCatching { enumValueOf<T>(it) }.getOrNull() } ?: default
 }

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">भगवद गीता</string>
+    <string name="app_name_sanskrit">श्रीमद्भगवद्गीता</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">होम</string>
+    <string name="nav_bookmarks">बुकमार्क</string>
+    <string name="nav_search">खोज</string>
+    <string name="nav_profile">प्रोफ़ाइल</string>
+
+    <!-- Home -->
+    <string name="home_continue_reading">पढ़ना जारी रखें</string>
+    <string name="home_verse_of_the_day">आज का श्लोक</string>
+    <string name="home_all_chapters">18 अध्याय</string>
+    <string name="home_refresh_verse">श्लोक बदलें</string>
+    <string name="home_overall_progress">कुल प्रगति</string>
+    <string name="home_navigate_chapters">अध्याय नेविगेट करें</string>
+    <string name="home_chapters_header">सभी अध्याय</string>
+
+    <!-- Chapter -->
+    <string name="chapter_verses_count">%1$d श्लोक</string>
+    <string name="chapter_progress">प्रगति</string>
+    <string name="chapter_read_only_mode">केवल पठन — किसी भी श्लोक पर टैप करें</string>
+    <string name="chapter_show_explanations">व्याख्या दिखाएँ</string>
+    <string name="chapter_read_only">केवल पठन मोड</string>
+
+    <!-- Verse -->
+    <string name="verse_label">श्लोक %1$s</string>
+    <string name="section_sanskrit">संस्कृत</string>
+    <string name="section_transliteration">उच्चारण</string>
+    <string name="section_translation">अनुवाद</string>
+    <string name="section_word_meanings">शब्द अर्थ</string>
+    <string name="section_commentary">टीका</string>
+    <string name="verse_prev">पिछला श्लोक</string>
+    <string name="verse_next">अगला श्लोक</string>
+    <string name="focus_mode">फोकस मोड</string>
+
+    <!-- Bookmark -->
+    <string name="bookmark_empty_title">कोई बुकमार्क नहीं</string>
+    <string name="bookmark_empty_subtitle">किसी भी श्लोक पर बुकमार्क आइकन टैप करके यहाँ सेव करें।</string>
+    <string name="bookmark_remove">बुकमार्क हटाएँ</string>
+    <string name="bookmark_add">बुकमार्क करें</string>
+
+    <!-- Search -->
+    <string name="search_hint">701 श्लोकों में खोजें…</string>
+    <string name="search_clear">साफ़ करें</string>
+    <string name="search_idle_title">गीता में खोजें</string>
+    <string name="search_idle_subtitle">701 श्लोकों में खोजने के लिए कोई शब्द दर्ज करें</string>
+    <string name="search_empty_title">कोई परिणाम नहीं मिला</string>
+    <string name="search_history_clear">इतिहास साफ़ करें</string>
+    <string name="search_recent">हाल की खोजें</string>
+
+    <!-- Profile & Settings -->
+    <string name="profile_title">प्रोफ़ाइल और सेटिंग्स</string>
+    <string name="profile_edit">प्रोफ़ाइल संपादित करें</string>
+    <string name="profile_setup_name">आपका नाम</string>
+    <string name="profile_setup_dob">जन्म तिथि</string>
+    <string name="profile_dob_day">दिन</string>
+    <string name="profile_dob_month">माह</string>
+    <string name="profile_dob_year">वर्ष</string>
+    <string name="profile_save">सहेजें</string>
+    <string name="profile_cancel">रद्द करें</string>
+    <string name="profile_rashi_preview">आपकी राशि: %1$s (%2$s)</string>
+    <string name="profile_set_up_prompt">अपना नाम और जन्म तिथि जोड़ने के लिए संपादन करें</string>
+
+    <!-- Rashi -->
+    <string name="rashi_vedic">जन्म राशि (जन्म तिथि से)</string>
+    <string name="rashi_naam">नाम राशि (नाम से)</string>
+    <string name="rashi_element">तत्व</string>
+    <string name="rashi_planet">स्वामी ग्रह</string>
+    <string name="rashi_quality">गुण</string>
+    <string name="rashi_lucky_number">शुभ अंक</string>
+    <string name="rashi_lucky_color">शुभ रंग</string>
+
+    <!-- Settings sections -->
+    <string name="settings_reading">पठन</string>
+    <string name="settings_experience">अनुभव</string>
+    <string name="settings_notifications">सूचनाएँ</string>
+    <string name="settings_language">भाषा</string>
+    <string name="settings_font_size">फ़ॉन्ट आकार</string>
+    <string name="settings_transliteration">उच्चारण दिखाएँ</string>
+    <string name="settings_word_meanings">शब्द अर्थ दिखाएँ</string>
+    <string name="settings_commentary">टीका दिखाएँ (हिन्दी)</string>
+    <string name="settings_focus_mode">फोकस मोड</string>
+    <string name="settings_focus_subtitle">ध्यान भटकाने वाली सामग्री छुपाता है</string>
+    <string name="settings_theme">थीम</string>
+    <string name="settings_app_theme">ऐप थीम</string>
+    <string name="settings_daily_reminder">दैनिक गीता स्मरण</string>
+    <string name="settings_reminder_subtitle">प्रतिदिन गीता पढ़ने का अनुस्मारक पाएँ</string>
+    <string name="settings_reminder_time">अनुस्मारक समय</string>
+    <string name="settings_auto_next">स्वचालित अगला श्लोक</string>
+    <string name="settings_auto_next_subtitle">स्वचालित रूप से अगले श्लोक पर जाएँ</string>
+    <string name="settings_auto_next_interval">अंतराल: %1$d सेकंड</string>
+
+    <!-- App info -->
+    <string name="app_info_verses">701 श्लोक · 18 अध्याय · पूर्णतः ऑफ़लाइन</string>
+    <string name="app_version">संस्करण 1.0.0</string>
+
+    <!-- Notification -->
+    <string name="notification_channel_name">दैनिक गीता स्मरण</string>
+    <string name="notification_channel_desc">भगवद गीता से दैनिक श्लोक अनुस्मारक</string>
+    <string name="notification_title">🕉 आज का श्लोक — %1$s</string>
+    <string name="notification_tap">भगवद गीता · पढ़ने के लिए टैप करें</string>
+
+    <!-- Widget -->
+    <string name="widget_description">भगवद गीता से आज का श्लोक दिखाता है</string>
+    <string name="widget_tap_hint">पढ़ने के लिए टैप करें →</string>
+    <string name="widget_header">आज का श्लोक</string>
+</resources>

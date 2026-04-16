@@ -1,53 +1,32 @@
 package com.gitaapp.ui.screens.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.animation.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gitaapp.data.model.Chapter
 import com.gitaapp.data.model.ReadingProgress
 import com.gitaapp.data.model.Verse
-import com.gitaapp.ui.components.ChapterCard
 import com.gitaapp.ui.components.ChapterCardShimmer
 import com.gitaapp.ui.components.EmptyState
 
@@ -56,125 +35,101 @@ import com.gitaapp.ui.components.EmptyState
 fun HomeScreen(
     onChapterClick: (Int) -> Unit,
     onContinueReading: (Int, Int) -> Unit,
+    onVerseInChapterClick: (Int, Int) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState       by viewModel.uiState.collectAsStateWithLifecycle()
     val verseOfTheDay by viewModel.verseOfTheDay.collectAsStateWithLifecycle()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    Scaffold(
-        topBar = {
-            GitaTopBar(
-                overallProgress = uiState.overallProgress,
-                scrollBehavior = scrollBehavior
-            )
-        },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            // ── Continue reading banner ───────────────────────────────────
-            uiState.lastReadProgress?.let { progress ->
-                item(key = "continue_reading") {
-                    ContinueReadingBanner(
-                        progress = progress,
-                        onClick = { onContinueReading(progress.chapterNumber, progress.lastReadVerseNumber) }
+    LazyColumn(
+        modifier      = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 120.dp, top = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // ── Header ────────────────────────────────────────────────────────
+        item(key = "header") { GitaHeader(overallProgress = uiState.overallProgress) }
+
+        // ── Continue reading ──────────────────────────────────────────────
+        uiState.lastReadProgress?.let { progress ->
+            item(key = "continue") {
+                ContinueReadingBanner(progress, onClick = {
+                    onContinueReading(progress.chapterNumber, progress.lastReadVerseNumber)
+                }, modifier = Modifier.padding(horizontal = 16.dp))
+            }
+        }
+
+        // ── Verse of the day ──────────────────────────────────────────────
+        verseOfTheDay?.let { verse ->
+            item(key = "votd") {
+                VerseOfTheDayCard(verse, onRefresh = viewModel::refreshVerseOfTheDay,
+                    onClick = { onContinueReading(verse.chapterNumber, verse.verseNumber) },
+                    modifier = Modifier.padding(horizontal = 16.dp))
+            }
+        }
+
+        // ── Dot-matrix chapter navigator ──────────────────────────────────
+        when (val st = uiState.chaptersState) {
+            is ChaptersState.Success -> {
+                item(key = "chapter_nav_header") {
+                    Text("Navigate Chapters",
+                        style    = MaterialTheme.typography.titleMedium,
+                        color    = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
+                }
+                item(key = "dot_matrix") {
+                    ChapterDotMatrix(
+                        chapters         = st.chapters,
+                        onChapterClick   = onChapterClick,
+                        onVerseClick     = onVerseInChapterClick,
+                        modifier         = Modifier.padding(horizontal = 16.dp)
                     )
                 }
-            }
-
-            // ── Verse of the day ──────────────────────────────────────────
-            verseOfTheDay?.let { verse ->
-                item(key = "verse_of_the_day") {
-                    VerseOfTheDayCard(
-                        verse = verse,
-                        onRefresh = { viewModel.refreshVerseOfTheDay() },
-                        onClick = { onContinueReading(verse.chapterNumber, verse.verseNumber) }
-                    )
+                item(key = "chapters_list_header") {
+                    Text("All Chapters",
+                        style    = MaterialTheme.typography.titleMedium,
+                        color    = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
+                }
+                items(items = st.chapters, key = { it.number }) { chapter ->
+                    ChapterRowCard(chapter = chapter, onClick = { onChapterClick(chapter.number) },
+                        modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
-
-            // ── Section header ────────────────────────────────────────────
-            item(key = "chapters_header") {
-                Text(
-                    text = "18 Chapters",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-            }
-
-            // ── Chapter list ──────────────────────────────────────────────
-            when (val state = uiState.chaptersState) {
-                is ChaptersState.Loading -> shimmerChapterList()
-                is ChaptersState.Error -> item {
-                    EmptyState(
-                        icon = "🕉",
-                        title = "Could not load chapters",
-                        subtitle = state.message
-                    )
-                }
-                is ChaptersState.Success -> {
-                    items(
-                        items = state.chapters,
-                        key = { chapter -> chapter.number }
-                    ) { chapter ->
-                        ChapterCard(
-                            chapter = chapter,
-                            onClick = { onChapterClick(chapter.number) }
-                        )
-                    }
+            is ChaptersState.Loading -> {
+                items(count = 6, key = { "sh_$it" }) {
+                    ChapterCardShimmer(modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
+            is ChaptersState.Error -> item {
+                EmptyState("🕉", "Could not load chapters", st.message)
+            }
         }
     }
 }
 
-// ── Top App Bar ───────────────────────────────────────────────────────────────
+// ── Header ────────────────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GitaTopBar(
-    overallProgress: Float,
-    scrollBehavior: TopAppBarScrollBehavior
-) {
-    Column {
-        TopAppBar(
-            title = {
-                Column {
-                    Text(
-                        text = "Bhagavad Gita",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "श्रीमद्भगवद्गीता",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.background,
-                scrolledContainerColor = MaterialTheme.colorScheme.surface
-            ),
-            scrollBehavior = scrollBehavior
-        )
+private fun GitaHeader(overallProgress: Float) {
+    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+        Text("श्रीमद्भगवद्गीता",
+            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        Text("Bhagavad Gita",
+            style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.SemiBold)
         if (overallProgress > 0f) {
-            LinearProgressIndicator(
-                progress = { overallProgress },
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.primaryContainer,
-                strokeCap = StrokeCap.Round
-            )
+            Spacer(Modifier.height(10.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                LinearProgressIndicator(
+                    progress  = { overallProgress },
+                    modifier  = Modifier.weight(1f).height(5.dp).clip(RoundedCornerShape(3.dp)),
+                    color     = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.primaryContainer,
+                    strokeCap = StrokeCap.Round
+                )
+                Text("${(overallProgress * 100).toInt()}%",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            }
         }
     }
 }
@@ -182,55 +137,28 @@ private fun GitaTopBar(
 // ── Continue Reading Banner ───────────────────────────────────────────────────
 
 @Composable
-private fun ContinueReadingBanner(
-    progress: ReadingProgress,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Continue Reading",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Chapter ${progress.chapterNumber} · Verse ${progress.lastReadVerseNumber}",
+private fun ContinueReadingBanner(progress: ReadingProgress, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        elevation = CardDefaults.cardElevation(0.dp)) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Continue Reading", style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                Spacer(Modifier.height(2.dp))
+                Text("Chapter ${progress.chapterNumber} · Verse ${progress.lastReadVerseNumber}",
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                    color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Spacer(Modifier.height(8.dp))
                 LinearProgressIndicator(
-                    progress = { progress.progressPercent },
-                    modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp)),
-                    color = MaterialTheme.colorScheme.primary,
+                    progress  = { progress.progressPercent },
+                    modifier  = Modifier.fillMaxWidth(0.7f).height(4.dp).clip(RoundedCornerShape(2.dp)),
+                    color     = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                    strokeCap = StrokeCap.Round
-                )
+                    strokeCap = StrokeCap.Round)
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Continue reading",
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(20.dp)
-            )
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -238,82 +166,229 @@ private fun ContinueReadingBanner(
 // ── Verse of the Day ──────────────────────────────────────────────────────────
 
 @Composable
-private fun VerseOfTheDayCard(
-    verse: Verse,
-    onRefresh: () -> Unit,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+private fun VerseOfTheDayCard(verse: Verse, onRefresh: () -> Unit, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        elevation = CardDefaults.cardElevation(0.dp)) {
+        Column(Modifier.padding(16.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Verse of the Day",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                    )
+                    Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Verse of the Day", style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
                 }
-                IconButton(
-                    onClick = onRefresh,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Refresh verse",
-                        tint = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(16.dp)
-                    )
+                IconButton(onClick = onRefresh, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Refresh, null, tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(16.dp))
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "${verse.chapterNumber}.${verse.verseNumber}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = verse.sanskritText,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = verse.translation,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
+            Spacer(Modifier.height(6.dp))
+            Text("${verse.chapterNumber}.${verse.verseNumber}", style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary)
+            Spacer(Modifier.height(4.dp))
+            // Sanskrit — no maxLines clip
+            Text(verse.sanskritText, style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer)
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f))
+            Spacer(Modifier.height(10.dp))
+            // Full translation — no artificial maxLines
+            Text(verse.translation, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f))
         }
     }
 }
 
-// ── Shimmer placeholders ──────────────────────────────────────────────────────
+// ── Chapter Dot Matrix Navigator ──────────────────────────────────────────────
 
-private fun LazyListScope.shimmerChapterList() {
-    items(count = 8, key = { "shimmer_$it" }) {
-        ChapterCardShimmer()
+@Composable
+private fun ChapterDotMatrix(
+    chapters: List<Chapter>,
+    onChapterClick: (Int) -> Unit,
+    onVerseClick: (Int, Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expandedChapter by remember { mutableIntStateOf(-1) }
+
+    Card(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(0.dp)) {
+        Column(Modifier.padding(16.dp)) {
+            // Chapter dots row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                chapters.forEach { chapter ->
+                    val isExpanded  = expandedChapter == chapter.number
+                    val isStarted   = chapter.isStarted
+                    val isComplete  = chapter.readingProgressPercent >= 1f
+                    val alpha by animateFloatAsState(if (isExpanded) 1f else 0.85f, label = "dotAlpha")
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable {
+                            expandedChapter = if (isExpanded) -1 else chapter.number
+                        }
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(if (isExpanded) 42.dp else 36.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    when {
+                                        isComplete  -> MaterialTheme.colorScheme.primary
+                                        isStarted   -> MaterialTheme.colorScheme.primaryContainer
+                                        isExpanded  -> MaterialTheme.colorScheme.secondaryContainer
+                                        else        -> MaterialTheme.colorScheme.surfaceVariant
+                                    }
+                                )
+                                .alpha(alpha)
+                        ) {
+                            Text(
+                                text  = chapter.number.toString(),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isExpanded) FontWeight.Bold else FontWeight.Normal,
+                                color = when {
+                                    isComplete -> MaterialTheme.colorScheme.onPrimary
+                                    isStarted  -> MaterialTheme.colorScheme.onPrimaryContainer
+                                    else       -> MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
+                        }
+                        if (isStarted && !isComplete) {
+                            Spacer(Modifier.height(3.dp))
+                            Box(Modifier.size(4.dp).clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary))
+                        }
+                    }
+                }
+            }
+
+            // Expandable verse dots for selected chapter
+            val selected = chapters.firstOrNull { it.number == expandedChapter }
+            AnimatedVisibility(
+                visible = selected != null,
+                enter = expandVertically(tween(250)) + fadeIn(tween(200)),
+                exit  = shrinkVertically(tween(200)) + fadeOut(tween(150))
+            ) {
+                selected?.let { ch ->
+                    Column {
+                        Spacer(Modifier.height(14.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        Spacer(Modifier.height(12.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()) {
+                            Column {
+                                Text(ch.nameTransliterated, style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurface)
+                                Text(ch.nameSanskrit, style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary)
+                            }
+                            TextButton(onClick = { onChapterClick(ch.number) }) {
+                                Text("Open", style = MaterialTheme.typography.labelMedium)
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(14.dp))
+                            }
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        // Verse dot matrix — all verses as small tappable dots
+                        VerseDotGrid(
+                            chapter      = ch,
+                            onVerseClick = { v -> onVerseClick(ch.number, v) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun VerseDotGrid(chapter: Chapter, onVerseClick: (Int) -> Unit) {
+    val lastRead = (chapter.readingProgressPercent * chapter.verseCount).toInt()
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement   = Arrangement.spacedBy(6.dp),
+        modifier              = Modifier.fillMaxWidth()
+    ) {
+        (1..chapter.verseCount).forEach { v ->
+            val isRead = v <= lastRead
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(
+                        if (isRead) MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                        else MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    .clickable { onVerseClick(v) }
+            ) {
+                Text(
+                    text  = v.toString(),
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = if (isRead) MaterialTheme.colorScheme.onPrimary
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+    Spacer(Modifier.height(4.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        LegendDot(MaterialTheme.colorScheme.primary, "Read")
+        LegendDot(MaterialTheme.colorScheme.surfaceVariant, "Unread")
+    }
+    Spacer(Modifier.height(4.dp))
+}
+
+@Composable
+private fun LegendDot(color: androidx.compose.ui.graphics.Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Box(Modifier.size(8.dp).clip(CircleShape).background(color))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+// ── Chapter Row Card (compact list) ──────────────────────────────────────────
+
+@Composable
+private fun ChapterRowCard(chapter: Chapter, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(0.dp)) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(38.dp).clip(RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center) {
+                Text(chapter.number.toString(), style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(chapter.nameTransliterated, style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(chapter.nameSanskrit, style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text("${chapter.verseCount}v", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (chapter.isStarted) {
+                    Spacer(Modifier.height(4.dp))
+                    Text("${(chapter.readingProgressPercent * 100).toInt()}%",
+                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
     }
 }

@@ -10,6 +10,7 @@ import com.gitaapp.core.database.dao.ReadingProgressDao
 import com.gitaapp.core.database.dao.VerseDao
 import com.gitaapp.core.repository.GitaRepository
 import com.gitaapp.core.repository.impl.GitaRepositoryImpl
+import com.gitaapp.notification.NotificationScheduler
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -25,40 +26,29 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideGitaDatabase(@ApplicationContext context: Context): GitaDatabase =
-        Room.databaseBuilder(
-            context,
-            GitaDatabase::class.java,
-            GitaDatabase.DATABASE_NAME
-        )
-            .fallbackToDestructiveMigration() // Replace with proper migrations in production
+        Room.databaseBuilder(context, GitaDatabase::class.java, GitaDatabase.DATABASE_NAME)
+            .fallbackToDestructiveMigration()
             .build()
 
-    @Provides
-    fun provideChapterDao(database: GitaDatabase): ChapterDao =
-        database.chapterDao()
-
-    @Provides
-    fun provideVerseDao(database: GitaDatabase): VerseDao =
-        database.verseDao()
-
-    @Provides
-    fun provideBookmarkDao(database: GitaDatabase): BookmarkDao =
-        database.bookmarkDao()
-
-    @Provides
-    fun provideReadingProgressDao(database: GitaDatabase): ReadingProgressDao =
-        database.readingProgressDao()
+    @Provides fun provideChapterDao(db: GitaDatabase): ChapterDao = db.chapterDao()
+    @Provides fun provideVerseDao(db: GitaDatabase): VerseDao = db.verseDao()
+    @Provides fun provideBookmarkDao(db: GitaDatabase): BookmarkDao = db.bookmarkDao()
+    @Provides fun provideReadingProgressDao(db: GitaDatabase): ReadingProgressDao = db.readingProgressDao()
 
     @Provides
     @Singleton
     fun provideWorkManager(@ApplicationContext context: Context): WorkManager =
         WorkManager.getInstance(context)
+
+    /** Provide raw Context for NotificationScheduler. */
+    @Provides
+    @Singleton
+    fun provideContext(@ApplicationContext context: Context): Context = context
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-
     @Binds
     @Singleton
     abstract fun bindGitaRepository(impl: GitaRepositoryImpl): GitaRepository

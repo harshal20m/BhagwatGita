@@ -20,7 +20,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Room schema export for migration tracking
         ksp {
             arg("room.schemaLocation", "$projectDir/schemas")
         }
@@ -51,7 +50,9 @@ android {
         freeCompilerArgs += listOf(
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
             "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
-            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
+            "-opt-in=androidx.compose.foundation.ExperimentalLayoutApi",
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "-opt-in=androidx.glance.ExperimentalGlanceApi"
         )
     }
 
@@ -109,6 +110,10 @@ dependencies {
 
     // Splash Screen
     implementation(libs.androidx.splashscreen)
+
+    // Glance (home-screen widgets)
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
 
     // Testing
     debugImplementation(libs.androidx.ui.test.manifest)
