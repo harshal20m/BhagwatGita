@@ -58,6 +58,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -110,6 +111,11 @@ dependencies {
 
     // Splash Screen
     implementation(libs.androidx.splashscreen)
+
+    // Retrofit & Networking
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.google.gson)
 
     // Glance (home-screen widgets)
     implementation(libs.glance.appwidget)

@@ -70,6 +70,7 @@ class GitaApplication : Application(), Configuration.Provider {
                         this[LifeIndicatorWidget.PROFILE_DOB_MONTH] = profile.dobMonth
                         this[LifeIndicatorWidget.PROFILE_DOB_YEAR] = profile.dobYear
                         this[LifeIndicatorWidget.LANGUAGE] = prefs.language.name
+                        this[LifeIndicatorWidget.LIFE_MAX_YEARS] = prefs.lifeIndicatorMaxYears
                     }
                 }
             }

@@ -11,13 +11,32 @@ import com.gitaapp.core.database.dao.VerseDao
 import com.gitaapp.core.repository.GitaRepository
 import com.gitaapp.core.repository.impl.GitaRepositoryImpl
 import com.gitaapp.notification.NotificationScheduler
+import com.gitaapp.data.api.GithubApiService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object NetworkModule {
+    @Provides
+    @Singleton
+    fun provideRetrofit(): Retrofit = Retrofit.Builder()
+        .baseUrl("https://api.github.com/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    @Provides
+    @Singleton
+    fun provideGithubApiService(retrofit: Retrofit): GithubApiService =
+        retrofit.create(GithubApiService::class.java)
+}
 
 @Module
 @InstallIn(SingletonComponent::class)

@@ -53,6 +53,7 @@ class LifeIndicatorWidget : GlanceAppWidget() {
         val month = prefs[PROFILE_DOB_MONTH] ?: 1
         val year = prefs[PROFILE_DOB_YEAR] ?: 2000
         val lang = prefs[LANGUAGE] ?: "ENGLISH"
+        val maxYears = prefs[LIFE_MAX_YEARS] ?: 90
 
         val ageInfo = calculateAge(day, month, year)
         val completedYears = ageInfo.first
@@ -70,7 +71,7 @@ class LifeIndicatorWidget : GlanceAppWidget() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = if(lang == "HINDI") "जीवन सूचक (90 वर्ष)" else "Life Indicator (90 Years)",
+                    text = if(lang == "HINDI") "जीवन सूचक ($maxYears वर्ष)" else "Life Indicator ($maxYears Years)",
                     style = TextStyle(
                         color = ColorProvider(Color(0xFFE2E2E6)),
                         fontSize = 13.sp,
@@ -80,46 +81,122 @@ class LifeIndicatorWidget : GlanceAppWidget() {
                 
                 Spacer(GlanceModifier.height(8.dp))
 
-                // 10x9 Grid for a more standard compact layout
-                Column(verticalAlignment = Alignment.CenterVertically) {
-                    for (row in 0 until 9) {
-                        Row {
-                            for (col in 0 until 10) {
-                                val yearIndex = row * 10 + col
-                                val yearNum = yearIndex + 1
-                                val isCompleted = yearIndex < completedYears
-                                
-                                val milestoneColor = when(yearNum) {
-                                    25 -> Color(0xFF4CAF50)
-                                    50 -> Color(0xFFFFC107)
-                                    75 -> Color(0xFFFF5722)
-                                    90 -> Color(0xFFF44336)
-                                    else -> null
-                                }
-
-                                Box(
-                                    modifier = GlanceModifier
-                                        .size(12.dp)
-                                        .padding(1.5.dp)
-                                        .background(
-                                            ColorProvider(
-                                                milestoneColor ?: if (isCompleted) Color(0xFFD0BCFF) 
-                                                else Color(0xFF44474E)
-                                            )
-                                        )
-                                        .cornerRadius(6.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (milestoneColor != null) {
-                                        Text(
-                                            text = yearNum.toString(),
-                                            style = TextStyle(
-                                                color = ColorProvider(Color.White),
-                                                fontSize = 7.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        )
+                // Compact Day & Month Row
+                Row(
+                    modifier = GlanceModifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Days (7-col grid)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val today = Calendar.getInstance()
+                        val daysInMonth = today.getActualMaximum(Calendar.DAY_OF_MONTH)
+                        val currentDay = today.get(Calendar.DAY_OF_MONTH)
+                        
+                        val dayCols = 7
+                        val dayRows = (daysInMonth + dayCols - 1) / dayCols
+                        
+                        for (r in 0 until dayRows) {
+                            Row {
+                                for (c in 0 until dayCols) {
+                                    val dayIndex = r * dayCols + c
+                                    if (dayIndex < daysInMonth) {
+                                        val isPassed = dayIndex < currentDay - 1
+                                        Box(
+                                            modifier = GlanceModifier
+                                                .size(6.dp)
+                                                .padding(1.dp)
+                                                .background(ColorProvider(if (isPassed) Color(0xFFD0BCFF) else Color(0xFF44474E)))
+                                                .cornerRadius(3.dp)
+                                        ) {}
+                                    } else {
+                                        Spacer(GlanceModifier.size(6.dp))
                                     }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(GlanceModifier.width(12.dp))
+
+                    // Months (7-col grid for parity)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val monthCols = 7
+                        val monthRows = (12 + monthCols - 1) / monthCols
+                        for (r in 0 until monthRows) {
+                            Row {
+                                for (c in 0 until monthCols) {
+                                    val monthIndex = r * monthCols + c
+                                    if (monthIndex < 12) {
+                                        val isCompleted = monthIndex < completedMonths
+                                        Box(
+                                            modifier = GlanceModifier
+                                                .size(6.dp)
+                                                .padding(1.dp)
+                                                .background(ColorProvider(if (isCompleted) Color(0xFFD0BCFF) else Color(0xFF44474E)))
+                                                .cornerRadius(3.dp)
+                                        ) {}
+                                    } else {
+                                        Spacer(GlanceModifier.size(6.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(GlanceModifier.height(8.dp))
+
+                // Years (10-col grid)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    val yearCols = 10
+                    val yearRows = (maxYears + yearCols - 1) / yearCols
+                    for (r in 0 until yearRows) {
+                        Row {
+                            for (c in 0 until yearCols) {
+                                val yearIndex = r * yearCols + c
+                                val yearNum = yearIndex + 1
+                                if (yearIndex < maxYears) {
+                                    val isCompleted = yearIndex < completedYears
+                                    
+                                    val isMilestone = yearNum % 10 == 0 || yearNum == maxYears
+                                    val milestoneColor = if (isMilestone) {
+                                        when {
+                                            yearNum <= 30 -> Color(0xFF4CAF50)
+                                            yearNum <= 60 -> Color(0xFFFFC107)
+                                            else -> Color(0xFFF44336)
+                                        }
+                                    } else null
+
+                                    Box(
+                                        modifier = GlanceModifier
+                                            .size(12.dp)
+                                            .padding(1.5.dp)
+                                            .background(
+                                                ColorProvider(
+                                                    if (isCompleted) {
+                                                        milestoneColor ?: Color(0xFFD0BCFF)
+                                                    } else {
+                                                        milestoneColor?.copy(alpha = 0.2f) ?: Color(0xFF44474E)
+                                                    }
+                                                )
+                                            )
+                                            .cornerRadius(6.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (isMilestone) {
+                                            Text(
+                                                text = yearNum.toString(),
+                                                style = TextStyle(
+                                                    color = ColorProvider(if (isCompleted) Color.White else milestoneColor ?: Color.Gray),
+                                                    fontSize = 5.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Spacer(GlanceModifier.size(12.dp))
                                 }
                             }
                         }
@@ -172,6 +249,7 @@ class LifeIndicatorWidget : GlanceAppWidget() {
         val PROFILE_DOB_MONTH = intPreferencesKey("profile_dob_month")
         val PROFILE_DOB_YEAR = intPreferencesKey("profile_dob_year")
         val LANGUAGE = stringPreferencesKey("language")
+        val LIFE_MAX_YEARS = intPreferencesKey("life_max_years")
     }
 }
 

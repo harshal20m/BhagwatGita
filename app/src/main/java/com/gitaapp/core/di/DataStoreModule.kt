@@ -181,6 +181,9 @@ class PreferencesManager @Inject constructor(private val dataStore: DataStore<Pr
             if (index == null) p.remove(Keys.PROFILE_MANUAL_RASHI)
             else p[Keys.PROFILE_MANUAL_RASHI] = index
         }
+        try {
+            (context.applicationContext as? com.gitaapp.GitaApplication)?.syncLifeWidget()
+        } catch (e: Exception) {}
     }
 
     private inline fun <reified T : Enum<T>> safeEnum(name: String?, default: T): T =
