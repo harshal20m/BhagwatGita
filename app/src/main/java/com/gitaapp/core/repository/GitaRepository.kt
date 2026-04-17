@@ -68,4 +68,7 @@ interface GitaRepository {
 
     /** Search across translations, transliterations, and commentaries. */
     fun searchVerses(query: String): Flow<List<SearchResult>>
+
+    /** Get the user's preferred language for notification/widget. */
+    suspend fun getAppLanguage(): String
 }

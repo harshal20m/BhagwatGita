@@ -26,7 +26,7 @@ import com.gitaapp.core.database.entity.VerseEntity
         BookmarkEntity::class,
         ReadingProgressEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class GitaDatabase : RoomDatabase() {

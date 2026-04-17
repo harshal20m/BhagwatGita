@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.gitaapp.R
 import com.gitaapp.data.model.AppLanguage
 import com.gitaapp.data.model.ReadingPreferences
 import com.gitaapp.ui.components.BookmarkIconButton
@@ -48,7 +50,7 @@ fun VerseScreen(
             VerseTopBar(
                 title = when (val s = uiState) {
                     is VerseUiState.Success -> "${s.chapterName} · ${s.verse.chapterNumber}.${s.verse.verseNumber}"
-                    else -> "Verse"
+                    else -> stringResource(R.string.verse_label, "").trim()
                 },
                 isBookmarked    = (uiState as? VerseUiState.Success)?.verse?.isBookmarked ?: false,
                 isFocusMode     = (uiState as? VerseUiState.Success)?.preferences?.focusModeEnabled ?: false,
@@ -64,7 +66,7 @@ fun VerseScreen(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             is VerseUiState.Error ->
-                EmptyState("🕉", "Could not load verse", state.message,
+                EmptyState("🕉", stringResource(R.string.error_load_verse), state.message,
                     Modifier.fillMaxSize().padding(innerPadding))
             is VerseUiState.Success ->
                 VerseContent(
@@ -95,12 +97,12 @@ private fun VerseTopBar(
         title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.titleSmall) },
         navigationIcon = { IconButton(onClick = onNavigateUp) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back)) } },
         actions = {
             IconButton(onClick = onToggleFocus) {
                 Icon(
                     if (isFocusMode) Icons.Filled.CenterFocusStrong else Icons.Outlined.CenterFocusWeak,
-                    "Focus mode",
+                    stringResource(R.string.focus_mode),
                     tint = if (isFocusMode) MaterialTheme.colorScheme.primary
                            else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -143,7 +145,7 @@ private fun VerseContent(
                 // Transliteration
                 if (prefs.showTransliteration && !prefs.focusModeEnabled) {
                     Divider16()
-                    SectionLabel(if (isHindi) "उच्चारण" else "TRANSLITERATION")
+                    SectionLabel(stringResource(R.string.section_transliteration))
                     Spacer(Modifier.height(6.dp))
                     Text(verse.transliteration,
                         style = MaterialTheme.typography.bodyMedium.copy(
@@ -152,7 +154,7 @@ private fun VerseContent(
                 }
                 // Translation
                 Divider16()
-                SectionLabel(if (isHindi) "अनुवाद" else "TRANSLATION")
+                SectionLabel(stringResource(R.string.section_translation))
                 Spacer(Modifier.height(6.dp))
                 Text(
                     if (isHindi) verse.commentary else verse.translation,
@@ -163,7 +165,7 @@ private fun VerseContent(
                 // Word meanings (English only)
                 if (prefs.showWordMeanings && !prefs.focusModeEnabled && !isHindi) {
                     Divider16()
-                    SectionLabel("WORD MEANINGS")
+                    SectionLabel(stringResource(R.string.section_word_meanings))
                     Spacer(Modifier.height(6.dp))
                     Text(verse.wordMeanings,
                         style = MaterialTheme.typography.bodyMedium.copy(
@@ -173,7 +175,7 @@ private fun VerseContent(
                 // Commentary (English only)
                 if (prefs.showCommentary && !prefs.focusModeEnabled && !isHindi) {
                     Divider16()
-                    SectionLabel("COMMENTARY (हिन्दी)")
+                    SectionLabel(stringResource(R.string.section_commentary))
                     Spacer(Modifier.height(6.dp))
                     Text(verse.commentary,
                         style = MaterialTheme.typography.bodyMedium.copy(
@@ -224,7 +226,7 @@ private fun FloatingVerseNav(
                 onClick  = onPrev,
                 enabled  = verseNumber > 1,
                 modifier = Modifier.size(42.dp)
-            ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, "Prev") }
+            ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, stringResource(R.string.action_prev)) }
 
             // Chapter pill + verse counter
             FilledTonalButton(
@@ -233,7 +235,8 @@ private fun FloatingVerseNav(
                 modifier = Modifier.weight(1f)
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Ch $chapterNumber", style = MaterialTheme.typography.labelMedium)
+                    val chapterLabel = stringResource(R.string.label_chapter)
+                    Text("$chapterLabel $chapterNumber", style = MaterialTheme.typography.labelMedium)
                     Text("$verseNumber / $totalVerses",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                         color = LocalContentColor.current.copy(alpha = 0.7f))
@@ -250,7 +253,7 @@ private fun FloatingVerseNav(
                 onClick  = onNext,
                 enabled  = verseNumber < totalVerses,
                 modifier = Modifier.size(42.dp)
-            ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, "Next") }
+            ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, stringResource(R.string.action_next)) }
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.gitaapp
 
 import android.os.Bundle
+import android.content.ContextWrapper
+import android.content.res.Configuration
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -47,6 +49,11 @@ import com.gitaapp.data.model.ReadingPreferences
 import com.gitaapp.data.model.ThemeMode
 import com.gitaapp.ui.navigation.GitaNavGraph
 import com.gitaapp.ui.navigation.Screen
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.gitaapp.data.model.AppLanguage
+import java.util.Locale
 import com.gitaapp.ui.theme.GitaAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -69,7 +76,25 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
             GitaAppTheme(darkTheme = darkTheme, appTheme = appTheme) {
-                GitaApp()
+                val context = LocalContext.current
+                val configuration = LocalConfiguration.current
+                
+                val localizedContext = remember(prefs.language.code, context) {
+                    val config = Configuration(configuration)
+                    config.setLocale(Locale(prefs.language.code))
+                    val localized = context.createConfigurationContext(config)
+                    object : ContextWrapper(context) {
+                        override fun getResources() = localized.resources
+                        override fun getAssets() = localized.assets
+                    }
+                }
+                
+                CompositionLocalProvider(
+                    LocalContext provides localizedContext,
+                    LocalConfiguration provides localizedContext.resources.configuration
+                ) {
+                    GitaApp()
+                }
             }
         }
     }
@@ -104,6 +129,13 @@ private fun GitaApp() {
     val showNav        = currentRoute in topLevel
     val floatingNav    = rememberFloatingNavState()
 
+    val navItems = listOf(
+        NavItem(Screen.Home,      stringResource(R.string.nav_home),     Icons.Filled.Home,     Icons.Outlined.Home),
+        NavItem(Screen.Bookmarks, stringResource(R.string.nav_bookmarks), Icons.Filled.Bookmark, Icons.Outlined.BookmarkBorder),
+        NavItem(Screen.Search,    stringResource(R.string.nav_search),   Icons.Filled.Search,   Icons.Outlined.Search),
+        NavItem(Screen.Profile,   stringResource(R.string.nav_profile),  Icons.Filled.Person,   Icons.Outlined.Person)
+    )
+
     Box(Modifier.fillMaxSize()) {
         GitaNavGraph(
             navController = navController,
@@ -119,6 +151,7 @@ private fun GitaApp() {
         ) {
             FloatingBottomNav(
                 currentRoute = currentRoute,
+                navItems     = navItems,
                 onNavigate   = { screen ->
                     navController.navigate(screen.route) {
                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -134,15 +167,14 @@ private fun GitaApp() {
 // ── Floating pill nav bar ─────────────────────────────────────────────────────
 
 private data class NavItem(val screen: Screen, val label: String, val sel: ImageVector, val unsel: ImageVector)
-private val NAV_ITEMS = listOf(
-    NavItem(Screen.Home,      "Home",    Icons.Filled.Home,     Icons.Outlined.Home),
-    NavItem(Screen.Bookmarks, "Saved",   Icons.Filled.Bookmark, Icons.Outlined.BookmarkBorder),
-    NavItem(Screen.Search,    "Search",  Icons.Filled.Search,   Icons.Outlined.Search),
-    NavItem(Screen.Profile,   "Profile", Icons.Filled.Person,   Icons.Outlined.Person)
-)
 
 @Composable
-private fun FloatingBottomNav(currentRoute: String?, onNavigate: (Screen) -> Unit, modifier: Modifier = Modifier) {
+private fun FloatingBottomNav(
+    currentRoute: String?,
+    navItems: List<NavItem>,
+    onNavigate: (Screen) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier
             .shadow(16.dp, RoundedCornerShape(32.dp), ambientColor = Color.Black.copy(0.18f))
@@ -151,7 +183,7 @@ private fun FloatingBottomNav(currentRoute: String?, onNavigate: (Screen) -> Uni
             .padding(horizontal = 8.dp, vertical = 10.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-            NAV_ITEMS.forEach { item ->
+            navItems.forEach { item ->
                 FloatingNavItem(item = item, isSelected = currentRoute == item.screen.route,
                     onClick = { onNavigate(item.screen) })
             }

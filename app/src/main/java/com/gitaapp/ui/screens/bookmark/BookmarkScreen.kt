@@ -44,6 +44,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.gitaapp.R
 import com.gitaapp.data.model.Bookmark
 import com.gitaapp.ui.components.EmptyState
 import java.text.SimpleDateFormat
@@ -61,7 +63,7 @@ fun BookmarkScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Bookmarks", style = MaterialTheme.typography.titleLarge) },
+                title = { Text(stringResource(R.string.nav_bookmarks), style = MaterialTheme.typography.titleLarge) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
@@ -71,8 +73,8 @@ fun BookmarkScreen(
 
             is BookmarkUiState.Empty ->
                 EmptyState(
-                    icon = "🔖", title = "No bookmarks yet",
-                    subtitle = "Tap the bookmark icon on any verse to save it here for quick access.",
+                    icon = "🔖", title = stringResource(R.string.bookmark_empty_title),
+                    subtitle = stringResource(R.string.bookmark_empty_subtitle),
                     modifier = Modifier.fillMaxSize().padding(innerPadding)
                 )
 
@@ -119,7 +121,7 @@ private fun SwipeToDeleteBookmark(bookmark: Bookmark, onClick: () -> Unit, onDel
                 Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)).background(color).padding(end = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.onErrorContainer,
+                Icon(Icons.Default.Delete, stringResource(R.string.bookmark_remove), tint = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.scale(sc))
             }
         },

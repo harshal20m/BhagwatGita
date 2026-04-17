@@ -50,6 +50,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.gitaapp.R
 import com.gitaapp.data.model.Chapter
 import com.gitaapp.data.model.Verse
 import com.gitaapp.ui.components.BookmarkIconButton
@@ -72,7 +74,7 @@ fun ChapterScreen(
             ChapterTopBar(
                 title = when (val s = uiState) {
                     is ChapterUiState.Success -> s.chapter.nameTransliterated
-                    else -> "Chapter"
+                    else -> stringResource(R.string.label_chapter)
                 },
                 showOnlyVerses = showOnlyVerses,
                 onToggleReadMode = { viewModel.toggleReadMode() },
@@ -88,7 +90,7 @@ fun ChapterScreen(
             ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
 
             is ChapterUiState.Error -> EmptyState(
-                icon = "🕉", title = "Could not load verses", subtitle = state.message,
+                icon = "🕉", title = stringResource(R.string.error_load_verses), subtitle = state.message,
                 modifier = Modifier.fillMaxSize().padding(innerPadding)
             )
 
@@ -118,7 +120,7 @@ private fun ChapterTopBar(
         title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = {
             IconButton(onClick = onNavigateUp) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
             }
         },
         actions = {
@@ -126,7 +128,7 @@ private fun ChapterTopBar(
             IconButton(onClick = onToggleReadMode) {
                 Icon(
                     imageVector = if (showOnlyVerses) Icons.Filled.MenuBook else Icons.Outlined.MenuBook,
-                    contentDescription = if (showOnlyVerses) "Show explanations" else "Read-only mode",
+                    contentDescription = if (showOnlyVerses) stringResource(R.string.chapter_show_explanations) else stringResource(R.string.chapter_read_only),
                     tint = if (showOnlyVerses) MaterialTheme.colorScheme.primary
                            else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -185,7 +187,7 @@ private fun ChapterContent(
                     ) {
                         Icon(Icons.Filled.MenuBook, null,
                             tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(16.dp))
-                        Text("Read-only — tap any verse to open it",
+                        Text(stringResource(R.string.chapter_read_only_mode),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer)
                     }
@@ -295,7 +297,8 @@ private fun FullVerseCard(
 @Composable
 private fun ChapterHeaderSection(chapter: Chapter) {
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-        Text("Chapter ${chapter.number}", style = MaterialTheme.typography.labelLarge,
+        val chapterLabel = stringResource(R.string.label_chapter)
+        Text("$chapterLabel ${chapter.number}", style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(4.dp))
         Text(chapter.nameTransliterated, style = MaterialTheme.typography.headlineSmall,
@@ -315,7 +318,8 @@ private fun ChapterHeaderSection(chapter: Chapter) {
             ReadingProgressBar(progress = chapter.readingProgressPercent, modifier = Modifier.fillMaxWidth())
         }
         Spacer(Modifier.height(4.dp))
-        Text("${chapter.verseCount} verses", style = MaterialTheme.typography.labelSmall,
+        val verseLabel = stringResource(R.string.label_verse)
+        Text("${chapter.verseCount} $verseLabel", style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

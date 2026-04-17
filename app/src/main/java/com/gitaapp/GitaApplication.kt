@@ -15,6 +15,7 @@ import com.gitaapp.core.di.PreferencesManager
 import com.gitaapp.core.repository.GitaRepository
 import com.gitaapp.notification.NotificationScheduler
 import androidx.glance.state.PreferencesGlanceStateDefinition
+import com.gitaapp.widget.LifeIndicatorWidget
 import com.gitaapp.widget.VerseOfDayWidget
 import com.gitaapp.widget.VerseOfDayWidgetUpdater
 import com.gitaapp.worker.SeedDatabaseWorker
@@ -50,6 +51,30 @@ class GitaApplication : Application(), Configuration.Provider {
         scheduleDatabaseSeed()
         applyNotificationPreferences()
         refreshWidget(force = false)
+        syncLifeWidget()
+    }
+
+    fun syncLifeWidget() {
+        appScope.launch {
+            val profile = preferencesManager.userProfile.first()
+            val prefs = preferencesManager.readingPreferences.first()
+            val manager = GlanceAppWidgetManager(this@GitaApplication)
+            val ids = manager.getGlanceIds(LifeIndicatorWidget::class.java)
+            if (ids.isEmpty()) return@launch
+
+            ids.forEach { id ->
+                updateAppWidgetState(this@GitaApplication, PreferencesGlanceStateDefinition, id) { p ->
+                    p.toMutablePreferences().apply {
+                        this[LifeIndicatorWidget.PROFILE_NAME] = profile.name
+                        this[LifeIndicatorWidget.PROFILE_DOB_DAY] = profile.dobDay
+                        this[LifeIndicatorWidget.PROFILE_DOB_MONTH] = profile.dobMonth
+                        this[LifeIndicatorWidget.PROFILE_DOB_YEAR] = profile.dobYear
+                        this[LifeIndicatorWidget.LANGUAGE] = prefs.language.name
+                    }
+                }
+            }
+            LifeIndicatorWidget().updateAll(this@GitaApplication)
+        }
     }
 
     private fun scheduleDatabaseSeed() {

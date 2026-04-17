@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.gitaapp.R
 import com.gitaapp.data.model.AppLanguage
 import com.gitaapp.data.model.Chapter
 import com.gitaapp.data.model.ReadingProgress
@@ -107,7 +109,7 @@ fun HomeScreen(
                 when (val st = uiState.chaptersState) {
                     is ChaptersState.Success -> {
                         item(key = "chapter_nav_header") {
-                            Text("Navigate Chapters",
+                            Text(stringResource(R.string.home_navigate_chapters),
                                 style    = MaterialTheme.typography.titleMedium,
                                 color    = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
@@ -121,7 +123,7 @@ fun HomeScreen(
                             )
                         }
                         item(key = "chapters_list_header") {
-                            Text("All Chapters",
+                            Text(stringResource(R.string.home_chapters_header),
                                 style    = MaterialTheme.typography.titleMedium,
                                 color    = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
@@ -137,7 +139,7 @@ fun HomeScreen(
                         }
                     }
                     is ChaptersState.Error -> item {
-                        EmptyState("🕉", "Could not load chapters", st.message)
+                        EmptyState("🕉", stringResource(R.string.error_load_chapters), st.message)
                     }
                 }
             }
@@ -200,10 +202,12 @@ private fun ContinueReadingBanner(progress: ReadingProgress, onClick: () -> Unit
         elevation = CardDefaults.cardElevation(0.dp)) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Continue Reading", style = MaterialTheme.typography.labelMedium,
+                Text(stringResource(R.string.home_continue_reading), style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
                 Spacer(Modifier.height(2.dp))
-                Text("Chapter ${progress.chapterNumber} · Verse ${progress.lastReadVerseNumber}",
+                val chapterText = stringResource(R.string.label_chapter)
+                val verseText = stringResource(R.string.label_verse)
+                Text("$chapterText ${progress.chapterNumber} · $verseText ${progress.lastReadVerseNumber}",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer)
                 Spacer(Modifier.height(8.dp))
@@ -240,7 +244,7 @@ private fun VerseOfTheDayCard(
                     Icon(Icons.Default.AutoAwesome, null, tint = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Verse of the Day", style = MaterialTheme.typography.labelMedium,
+                    Text(stringResource(R.string.home_verse_of_the_day), style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
                 }
                 IconButton(onClick = onRefresh, modifier = Modifier.size(32.dp)) {
@@ -357,7 +361,7 @@ private fun ChapterDotMatrix(
                                     color = MaterialTheme.colorScheme.primary)
                             }
                             TextButton(onClick = { onChapterClick(ch.number) }) {
-                                Text("Open", style = MaterialTheme.typography.labelMedium)
+                                Text(stringResource(R.string.action_open), style = MaterialTheme.typography.labelMedium)
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(14.dp))
                             }
                         }
@@ -407,8 +411,8 @@ private fun VerseDotGrid(chapter: Chapter, onVerseClick: (Int) -> Unit) {
     }
     Spacer(Modifier.height(4.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        LegendDot(MaterialTheme.colorScheme.primary, "Read")
-        LegendDot(MaterialTheme.colorScheme.surfaceVariant, "Unread")
+        LegendDot(MaterialTheme.colorScheme.primary, stringResource(R.string.legend_read))
+        LegendDot(MaterialTheme.colorScheme.surfaceVariant, stringResource(R.string.legend_unread))
     }
     Spacer(Modifier.height(4.dp))
 }

@@ -39,6 +39,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.ui.res.stringResource
+import com.gitaapp.R
+
 // ── Bookmark Icon Button ──────────────────────────────────────────────────────
 
 @Composable
@@ -56,7 +59,7 @@ fun BookmarkIconButton(
     IconButton(onClick = onClick, modifier = modifier) {
         Icon(
             imageVector        = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-            contentDescription = if (isBookmarked) "Remove bookmark" else "Add bookmark",
+            contentDescription = if (isBookmarked) stringResource(R.string.bookmark_remove) else stringResource(R.string.bookmark_add),
             tint               = tint
         )
     }
@@ -68,7 +71,7 @@ fun BookmarkIconButton(
 fun ReadingProgressBar(progress: Float, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Progress", style = MaterialTheme.typography.labelSmall,
+            Text(stringResource(R.string.chapter_progress), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary)

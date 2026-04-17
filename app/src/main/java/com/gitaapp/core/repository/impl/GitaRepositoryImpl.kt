@@ -10,6 +10,7 @@ import com.gitaapp.core.database.dao.VerseDao
 import com.gitaapp.core.database.dao.VerseWithBookmark
 import com.gitaapp.core.database.entity.BookmarkEntity
 import com.gitaapp.core.database.entity.ReadingProgressEntity
+import com.gitaapp.core.di.PreferencesManager
 import com.gitaapp.core.repository.GitaRepository
 import com.gitaapp.data.model.Bookmark
 import com.gitaapp.data.model.Chapter
@@ -17,6 +18,8 @@ import com.gitaapp.data.model.ReadingProgress
 import com.gitaapp.data.model.SearchResult
 import com.gitaapp.data.model.Verse
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,7 +29,8 @@ class GitaRepositoryImpl @Inject constructor(
     private val chapterDao: ChapterDao,
     private val verseDao: VerseDao,
     private val bookmarkDao: BookmarkDao,
-    private val readingProgressDao: ReadingProgressDao
+    private val readingProgressDao: ReadingProgressDao,
+    private val preferencesManager: PreferencesManager
 ) : GitaRepository {
 
     // ── Chapters ──────────────────────────────────────────────────────────
@@ -102,18 +106,25 @@ class GitaRepositoryImpl @Inject constructor(
     // ── Search ────────────────────────────────────────────────────────────
 
     override fun searchVerses(query: String): Flow<List<SearchResult>> =
-        verseDao.searchVerses(query).map { list ->
+        combine(
+            verseDao.searchVerses(query),
+            preferencesManager.readingPreferences
+        ) { list: List<VerseWithBookmark>, prefs ->
             list.map { verse ->
+                val isHindi = prefs.language.code == "hi"
                 SearchResult(
                     verseId = verse.verseId,
                     chapterNumber = verse.chapterNumber,
                     verseNumber = verse.verseNumber,
-                    translation = verse.translation,
-                    chapterName = "Chapter ${verse.chapterNumber}",
-                    matchHighlight = verse.translation.extractHighlight(query)
+                    translation = if (isHindi) verse.translationHi else verse.translation,
+                    chapterName = verse.chapterNumber.toString(),
+                    matchHighlight = (if (isHindi) verse.translationHi else verse.translation).extractHighlight(query)
                 )
             }
         }
+
+    override suspend fun getAppLanguage(): String =
+        preferencesManager.readingPreferences.first().language.code
 
     // ── Private mappers ───────────────────────────────────────────────────
 

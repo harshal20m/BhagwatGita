@@ -41,12 +41,20 @@ class PreferencesManager @Inject constructor(private val dataStore: DataStore<Pr
         val REMINDER_MINUTE        = intPreferencesKey("reminder_minute")
         val AUTO_NEXT_ENABLED      = booleanPreferencesKey("auto_next_enabled")
         val AUTO_NEXT_INTERVAL     = intPreferencesKey("auto_next_interval")
+        val SHOW_LIFE_INDICATOR    = booleanPreferencesKey("show_life_indicator")
+        val LIFE_MAX_YEARS         = intPreferencesKey("life_max_years")
+        val SHOW_LIFE_DAYS          = booleanPreferencesKey("show_life_days")
+        val SHOW_LIFE_MONTHS        = booleanPreferencesKey("show_life_months")
+        val SHOW_LIFE_YEARS         = booleanPreferencesKey("show_life_years")
         val SEARCH_HISTORY         = stringPreferencesKey("search_history")
         val PROFILE_NAME           = stringPreferencesKey("profile_name")
         val PROFILE_DOB_DAY        = intPreferencesKey("profile_dob_day")
         val PROFILE_DOB_MONTH      = intPreferencesKey("profile_dob_month")
         val PROFILE_DOB_YEAR       = intPreferencesKey("profile_dob_year")
+        val PROFILE_BIRTH_HOUR     = intPreferencesKey("profile_birth_hour")
+        val PROFILE_BIRTH_MINUTE   = intPreferencesKey("profile_birth_minute")
         val PROFILE_IS_SETUP       = booleanPreferencesKey("profile_is_setup")
+        val PROFILE_MANUAL_RASHI   = intPreferencesKey("profile_manual_rashi")
         val VOTD_VERSE_ID          = stringPreferencesKey("votd_verse_id")
         val VOTD_LAST_UPDATE_DAY   = longPreferencesKey("votd_last_update_day")
     }
@@ -58,13 +66,18 @@ class PreferencesManager @Inject constructor(private val dataStore: DataStore<Pr
             showWordMeanings     = p[Keys.SHOW_WORD_MEANINGS] ?: true,
             showCommentary       = p[Keys.SHOW_COMMENTARY] ?: true,
             themeMode            = safeEnum(p[Keys.THEME_MODE], ThemeMode.SYSTEM),
-            language             = safeEnum(p[Keys.LANGUAGE], AppLanguage.ENGLISH),
+            language             = safeEnum(p[Keys.LANGUAGE], AppLanguage.HINDI),
             focusModeEnabled     = p[Keys.FOCUS_MODE] ?: false,
             dailyReminderEnabled = p[Keys.DAILY_REMINDER] ?: false,
             reminderHour         = p[Keys.REMINDER_HOUR] ?: 7,
             reminderMinute       = p[Keys.REMINDER_MINUTE] ?: 0,
             autoNextEnabled      = p[Keys.AUTO_NEXT_ENABLED] ?: false,
-            autoNextIntervalSeconds = p[Keys.AUTO_NEXT_INTERVAL] ?: 15
+            autoNextIntervalSeconds = p[Keys.AUTO_NEXT_INTERVAL] ?: 15,
+            showLifeIndicator    = p[Keys.SHOW_LIFE_INDICATOR] ?: false,
+            lifeIndicatorMaxYears = p[Keys.LIFE_MAX_YEARS] ?: 90,
+            showLifeDays         = p[Keys.SHOW_LIFE_DAYS] ?: true,
+            showLifeMonths       = p[Keys.SHOW_LIFE_MONTHS] ?: true,
+            showLifeYears        = p[Keys.SHOW_LIFE_YEARS] ?: true
         )
     }
 
@@ -74,11 +87,14 @@ class PreferencesManager @Inject constructor(private val dataStore: DataStore<Pr
 
     val userProfile: Flow<UserProfile> = dataStore.data.map { p ->
         UserProfile(
-            name     = p[Keys.PROFILE_NAME] ?: "",
-            dobDay   = p[Keys.PROFILE_DOB_DAY] ?: 1,
-            dobMonth = p[Keys.PROFILE_DOB_MONTH] ?: 1,
-            dobYear  = p[Keys.PROFILE_DOB_YEAR] ?: 2000,
-            isSetup  = p[Keys.PROFILE_IS_SETUP] ?: false
+            name        = p[Keys.PROFILE_NAME] ?: "",
+            dobDay      = p[Keys.PROFILE_DOB_DAY] ?: 1,
+            dobMonth    = p[Keys.PROFILE_DOB_MONTH] ?: 1,
+            dobYear     = p[Keys.PROFILE_DOB_YEAR] ?: 2000,
+            birthHour   = p[Keys.PROFILE_BIRTH_HOUR] ?: 12,
+            birthMinute = p[Keys.PROFILE_BIRTH_MINUTE] ?: 0,
+            manualRashiIndex = p[Keys.PROFILE_MANUAL_RASHI],
+            isSetup     = p[Keys.PROFILE_IS_SETUP] ?: false
         )
     }
 
@@ -116,15 +132,31 @@ class PreferencesManager @Inject constructor(private val dataStore: DataStore<Pr
     suspend fun setReminderTime(h: Int, m: Int)      { dataStore.edit { it[Keys.REMINDER_HOUR] = h; it[Keys.REMINDER_MINUTE] = m } }
     suspend fun setAutoNext(v: Boolean)              { dataStore.edit { it[Keys.AUTO_NEXT_ENABLED] = v } }
     suspend fun setAutoNextInterval(seconds: Int)    { dataStore.edit { it[Keys.AUTO_NEXT_INTERVAL] = seconds } }
+    suspend fun setShowLifeIndicator(v: Boolean)     { 
+        dataStore.edit { it[Keys.SHOW_LIFE_INDICATOR] = v }
+        try {
+            (context.applicationContext as? com.gitaapp.GitaApplication)?.syncLifeWidget()
+        } catch (e: Exception) {}
+    }
 
-    suspend fun saveProfile(name: String, day: Int, month: Int, year: Int) {
+    suspend fun setLifeMaxYears(v: Int) { dataStore.edit { it[Keys.LIFE_MAX_YEARS] = v } }
+    suspend fun setShowLifeDays(v: Boolean) { dataStore.edit { it[Keys.SHOW_LIFE_DAYS] = v } }
+    suspend fun setShowLifeMonths(v: Boolean) { dataStore.edit { it[Keys.SHOW_LIFE_MONTHS] = v } }
+    suspend fun setShowLifeYears(v: Boolean) { dataStore.edit { it[Keys.SHOW_LIFE_YEARS] = v } }
+
+    suspend fun saveProfile(name: String, day: Int, month: Int, year: Int, hour: Int, minute: Int) {
         dataStore.edit {
-            it[Keys.PROFILE_NAME]      = name
-            it[Keys.PROFILE_DOB_DAY]   = day
-            it[Keys.PROFILE_DOB_MONTH] = month
-            it[Keys.PROFILE_DOB_YEAR]  = year
-            it[Keys.PROFILE_IS_SETUP]  = true
+            it[Keys.PROFILE_NAME]         = name
+            it[Keys.PROFILE_DOB_DAY]      = day
+            it[Keys.PROFILE_DOB_MONTH]    = month
+            it[Keys.PROFILE_DOB_YEAR]     = year
+            it[Keys.PROFILE_BIRTH_HOUR]   = hour
+            it[Keys.PROFILE_BIRTH_MINUTE] = minute
+            it[Keys.PROFILE_IS_SETUP]     = true
         }
+        try {
+            (context.applicationContext as? com.gitaapp.GitaApplication)?.syncLifeWidget()
+        } catch (e: Exception) {}
     }
 
     suspend fun addSearchHistory(query: String) {
@@ -143,6 +175,13 @@ class PreferencesManager @Inject constructor(private val dataStore: DataStore<Pr
     }
 
     suspend fun clearSearchHistory() { dataStore.edit { it[Keys.SEARCH_HISTORY] = "" } }
+
+    suspend fun setManualRashi(index: Int?) {
+        dataStore.edit { p ->
+            if (index == null) p.remove(Keys.PROFILE_MANUAL_RASHI)
+            else p[Keys.PROFILE_MANUAL_RASHI] = index
+        }
+    }
 
     private inline fun <reified T : Enum<T>> safeEnum(name: String?, default: T): T =
         name?.let { runCatching { enumValueOf<T>(it) }.getOrNull() } ?: default
