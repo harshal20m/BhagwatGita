@@ -42,11 +42,11 @@ A modern, soulful, and feature-rich Bhagavad Gita application built with **Jetpa
 
 | Home Screen | Reading View | Profile & Life | Theme Options |
 | :---: | :---: | :---: | :---: |
-| ![Home](app/src/main/assets/screenshots/home.png) | ![Verse](app/src/main/assets/screenshots/verse.png) | ![Profile](app/src/main/assets/screenshots/profile.png) | ![Theme](app/src/main/assets/screenshots/theme.png) |
+| ![Home](metadata/screenshots/home.png) | ![Verse](metadata/screenshots/verse.png) | ![Profile](metadata/screenshots/profile.png) | ![Theme](metadata/screenshots/theme.png) |
 
 | Chapters List | Search Function | Bookmarks | Chapter Detail |
 | :---: | :---: | :---: | :---: |
-| ![Chapters](app/src/main/assets/screenshots/chapter.png) | ![Search](app/src/main/assets/screenshots/search.png) | ![Bookmarks](app/src/main/assets/screenshots/bookmarks.png) | ![Chapter Detail](app/src/main/assets/screenshots/chapter_verse_only.png) |
+| ![Chapters](metadata/screenshots/chapter.png) | ![Search](metadata/screenshots/search.png) | ![Bookmarks](metadata/screenshots/bookmarks.png) | ![Chapter Detail](metadata/screenshots/chapter_verse_only.png) |
 
 ---
 
